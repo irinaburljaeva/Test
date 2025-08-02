@@ -45,90 +45,31 @@
     @keyframes fadeIn {
       to { opacity: 1; transform: translateY(0); }
     }
-    .slide h2 {
-      margin-bottom:1.5rem;
-      font-size:1.25rem;
-    }
-    .options label {
-      display:block;
-      margin:.75rem 0;
-      cursor:pointer;
-      text-align:left;
-      opacity: 0;
-      transform: translateX(-10px);
-      animation: fadeInOpt 0.3s forwards;
-    }
-    @keyframes fadeInOpt {
-      to { opacity: 1; transform: translateX(0); }
-    }
+    .slide h2 { margin-bottom:1.5rem; font-size:1.25rem; }
+    .options label { display:block; margin:.75rem 0; cursor:pointer; text-align:left; }
     .options input { margin-right:.5rem }
-    .fields {
-      display:flex; gap:1rem;
-      justify-content:center;
-      margin-bottom:1rem;
-    }
-    .fields input {
-      flex:1; padding:.5rem;
-      border:1px solid #ccc;
-      border-radius:4px;
-      text-align:center;
-    }
-    #bmiValue {
-      margin-bottom:1rem;
-      font-weight:bold;
-    }
+    .fields { display:flex; gap:1rem; justify-content:center; margin-bottom:1rem; }
+    .fields input { flex:1; padding:.5rem; border:1px solid #ccc; border-radius:4px; text-align:center; }
+    #bmiValue, #saltResult { margin-bottom:1rem; font-weight:bold; }
     button {
-      display:block; width:100%;
-      padding:.75rem; font-size:1rem;
-      background:#CF2C02; color:#fff;
-      border:none; border-radius:4px;
+      display:block; width:100%; padding:.75rem; font-size:1rem;
+      background:#CF2C02; color:#fff; border:none; border-radius:4px;
       cursor:pointer; transition:transform 0.2s, background 0.3s;
     }
-    button:hover:not(:disabled) {
-      transform: scale(1.02);
-      background:#e54c00;
-    }
-    button:disabled {
-      background:#f5a46b; cursor:not-allowed;
-    }
-    .result {
-      padding:2rem;
-      text-align:center;
-      animation: fadeIn 0.6s forwards;
-    }
-    .result img {
-      max-width:100%; border-radius:8px;
-      margin-bottom:1rem;
-      opacity: 0;
-      transform: scale(0.9);
-      animation: popImg 0.5s forwards 0.3s;
-    }
-    @keyframes popImg {
-      to { opacity: 1; transform: scale(1); }
-    }
+    button:hover:not(:disabled) { transform: scale(1.02); background:#e54c00; }
+    button:disabled { background:#f5a46b; cursor:not-allowed; }
+    .result { padding:2rem; text-align:center; animation: fadeIn 0.6s forwards; }
+    .result img { max-width:100%; border-radius:8px; margin-bottom:1rem; }
     .result h2 { margin-bottom:1rem; font-weight:bold }
     .result p { margin-bottom:1rem; line-height:1.5; font-weight: normal; }
-    .result ul {
-      list-style:none;
-      padding-left:0;
-      text-align:left;
-      margin:1rem auto;
-      max-width:500px;
-    }
+    .result ul { list-style:none; padding-left:0; text-align:left; margin:1rem auto; max-width:500px; }
     .result ul li { margin-bottom:.5rem }
     .btn-link {
-      display:inline-block;
-      margin-top:1rem;
-      padding:.5rem 1rem;
-      background:#007bff;
-      color:#fff;
-      text-decoration:none;
-      border-radius:4px;
+      display:inline-block; margin-top:1rem; padding:.5rem 1rem;
+      background:#007bff; color:#fff; text-decoration:none; border-radius:4px;
       transition: background 0.3s ease;
     }
-    .btn-link:hover {
-      background:#005fcc;
-    }
+    .btn-link:hover { background:#005fcc; }
   </style>
 </head>
 <body>
@@ -170,9 +111,20 @@
       { type:'radio', name:'meds', question:'7. Приём препаратов', options:[
         {text:'Нет',value:0},{text:'Иногда',value:1},{text:'Регулярно',value:2}
       ]},
-      { type:'radio', name:'swelling', question:'8. Замечаете ли вы отёки?', options:[
-        {text:'Нет',value:0},{text:'Иногда',value:1},{text:'Часто',value:2}
-      ]}
+      { 
+        type:'salt', 
+        question:'8. Какие из этих продуктов вы едите каждый день? (Выберите все подходящие)' 
+      }
+    ];
+
+    const saltProducts = [
+      {text:'Хлеб, выпечка', value:1},
+      {text:'Сыры', value:2},
+      {text:'Колбаса, сосиски, ветчина', value:2.5},
+      {text:'Консервы', value:1.5},
+      {text:'Фастфуд', value:3},
+      {text:'Солёные снеки (чипсы, сухарики, орешки)', value:2},
+      {text:'Маринованные продукты', value:2}
     ];
 
     let answers={}, current=0, total=slides.length-1;
@@ -204,9 +156,8 @@
       } else if(slide.type==='radio'){
         const opts=document.createElement('div');
         opts.className='options';
-        slide.options.forEach((o,i)=>{
+        slide.options.forEach(o=>{
           const lbl=document.createElement('label');
-          lbl.style.animationDelay = `${i * 0.1}s`;
           lbl.innerHTML=`<input type="radio" name="${slide.name}" value="${o.value}"> ${o.text}`;
           opts.append(lbl);
         });
@@ -217,9 +168,7 @@
         btn.disabled=true;
         el.append(btn);
 
-        opts.addEventListener('input',()=>{
-          btn.disabled=!opts.querySelector('input:checked');
-        });
+        opts.addEventListener('input',()=>{ btn.disabled=!opts.querySelector('input:checked'); });
         btn.onclick=()=>{
           answers[slide.name]=+opts.querySelector('input:checked').value;
           current++; render();
@@ -263,6 +212,44 @@
           answers.bmi=bmi>30?3:bmi>25?2:bmi>22?1:0;
           current++; render();
         };
+
+      } else if(slide.type==='salt'){
+        const opts=document.createElement('div');
+        opts.className='options';
+        saltProducts.forEach(p=>{
+          const lbl=document.createElement('label');
+          lbl.innerHTML=`<input type="checkbox" value="${p.value}"> ${p.text}`;
+          opts.append(lbl);
+        });
+        el.append(opts);
+
+        const saltResult=document.createElement('div');
+        saltResult.id='saltResult';
+        el.append(saltResult);
+
+        const btn=document.createElement('button');
+        btn.textContent=current<total?'Далее':'Завершить';
+        btn.disabled=true;
+        el.append(btn);
+
+        opts.addEventListener('change',()=>{
+          const checked=[...opts.querySelectorAll('input:checked')];
+          if(checked.length){
+            btn.disabled=false;
+            const totalSalt=checked.reduce((sum,c)=>sum+parseFloat(c.value),0);
+            let risk='';
+            if(totalSalt<=5) risk='🟢 Норма';
+            else if(totalSalt<=8) risk='🟡 Слегка выше нормы';
+            else risk='🔴 Высокое потребление соли!';
+            saltResult.textContent=`Примерно ${totalSalt.toFixed(1)} г соли в день. ${risk}`;
+            answers.salt = totalSalt>8?2:totalSalt>5?1:0;
+          } else {
+            saltResult.textContent='';
+            btn.disabled=true;
+          }
+        });
+
+        btn.onclick=()=>{ current++; render(); };
       }
 
       container.append(el);
@@ -334,4 +321,4 @@
     render();
   </script>
 </body>
-</html>
+  </html>
