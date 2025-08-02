@@ -1,0 +1,116 @@
+<!DOCTYPE html><html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Оценка склонности к отекам</title>
+  <style>
+    body { background: #f7f7f7; font-family: sans-serif; margin: 0; padding: 2rem; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    h1 { text-align: center; margin-bottom: 1.5rem; }
+    fieldset { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; }
+    legend { font-weight: bold; }
+    label { display: block; margin-bottom: 0.5rem; cursor: pointer; }
+    input[type="radio"] { margin-right: 0.5rem; }
+    .flex { display: flex; gap: 1rem; }
+    .flex input { width: 100%; }
+    button { width: 100%; padding: 0.75rem; font-size: 1rem; background: #e85d04; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .result { margin-top: 1.5rem; padding: 1rem; border-radius: 4px; }
+    .low { background: #d4edda; color: #155724; }
+    .moderate { background: #fff3cd; color: #856404; }
+    .high { background: #f8d7da; color: #721c24; }
+    .btn-link { display: inline-block; margin-top: 1rem; padding: 0.5rem 1rem; background: #007bff; color: #fff; text-decoration: none; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Опросник: склонность к отекам у женщин</h1>
+    <form id="quiz">
+      <fieldset>
+        <legend>1. Возраст</legend>
+        <label><input type="radio" name="age" value="0" required>До 25 лет</label>
+        <label><input type="radio" name="age" value="1">26–35 лет</label>
+        <label><input type="radio" name="age" value="2">36–45 лет</label>
+        <label><input type="radio" name="age" value="3">Старше 45</label>
+      </fieldset>
+      <fieldset>
+        <legend>2. Вес и ИМТ</legend>
+        <div class="flex">
+          <label>Вес (кг):<input type="number" id="weight" min="30" max="200" required></label>
+          <label>Рост (см):<input type="number" id="height" min="100" max="250" required></label>
+        </div>
+        <small>ИМТ = вес ÷ (рост м)²</small>
+      </fieldset>
+      <fieldset>
+        <legend>3. Образ жизни</legend>
+        <label><input type="radio" name="life" value="0" required>Активный, весь день на ногах</label>
+        <label><input type="radio" name="life" value="1">Сидячая работа, но есть активность</label>
+        <label><input type="radio" name="life" value="2">Преимущественно сидячий</label>
+      </fieldset>
+      <fieldset>
+        <legend>4. Физическая активность</legend>
+        <label><input type="radio" name="sport" value="0" required>3+ тренировки/нед</label>
+        <label><input type="radio" name="sport" value="1">1–2 тренировки/нед</label>
+        <label><input type="radio" name="sport" value="2">Никаких тренировок</label>
+      </fieldset>
+      <fieldset>
+        <legend>5. День цикла</legend>
+        <label><input type="radio" name="cycle" value="0" required>5–14 день</label>
+        <label><input type="radio" name="cycle" value="2">15–28 день</label>
+        <label><input type="radio" name="cycle" value="1">1–4 день или нет цикла</label>
+      </fieldset>
+      <fieldset>
+        <legend>6. Хронические заболевания</legend>
+        <label><input type="radio" name="disease" value="0" required>Нет</label>
+        <label><input type="radio" name="disease" value="2">Есть, но без симптомов</label>
+        <label><input type="radio" name="disease" value="3">Есть с симптомами</label>
+      </fieldset>
+      <fieldset>
+        <legend>7. Прием препаратов</legend>
+        <label><input type="radio" name="meds" value="0" required>Нет</label>
+        <label><input type="radio" name="meds" value="1">Иногда</label>
+        <label><input type="radio" name="meds" value="2">Регулярно</label>
+      </fieldset>
+      <fieldset>
+        <legend>8. Отеки</legend>
+        <label><input type="radio" name="swelling" value="0" required>Нет</label>
+        <label><input type="radio" name="swelling" value="1">Иногда</label>
+        <label><input type="radio" name="swelling" value="2">Часто</label>
+      </fieldset>
+      <button type="submit">Узнать результат</button>
+    </form>
+    <div id="result" class="result"></div>
+  </div>
+  <script>
+    document.getElementById('quiz').addEventListener('submit', function(e) {
+      e.preventDefault();
+      let score = 0;
+      const form = e.target;
+      ['age','life','sport','cycle','disease','meds','swelling'].forEach(key => {
+        score += +form.elements[key].value;
+      });
+      const w = +document.getElementById('weight').value;
+      const h = +document.getElementById('height').value/100;
+      const bmi = w/(h*h);
+      score += bmi>30?3:bmi>25?2:bmi>22?1:0;
+      let title, text, cls;
+      if(score<=6) {
+        title = 'Без склонности к отекам';
+        text = 'Отеки маловероятны или кратковременны.<br>Рекомендации:<br>• Поддерживайте активность и водный баланс<br>• Избегайте резкого повышения натрия';
+        cls='low';
+      } else if(score<=13) {
+        title='Средняя склонность к отекам';
+        text='Отеки могут появляться при цикле, питании или малоподвижности.<br>Рекомендации:<br>• Следите за натрием<br>• Используйте лимфодренажные средства<br>• Введите дневник веса и жидкости<br>• Больше движения, отдых и сон';
+        cls='moderate';
+      } else {
+        title='Сильно склонны к отекам';
+        text='Частые отеки могут сигнализировать о нарушениях.<br>Рекомендации:<br>• Обратитесь к врачу<br>• Контроль соли и жидкости<br>• Возможен прием диуретиков (по назначению)<br>• Ведение дневника симптомов';
+        cls='high';
+      }
+      const res = document.getElementById('result');
+      res.className='result '+cls;
+      res.innerHTML=`<h2>${title}</h2><p>${text}</p><a href='https://my.walk-walk.ru/' class='btn-link'>К анти-отечной программе</a>`;
+      res.scrollIntoView({behavior:'smooth'});
+    });
+  </script>
+</body>
+        </html>
