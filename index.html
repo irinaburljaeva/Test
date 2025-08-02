@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="ru">
+<!DOCTYPE html><html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -24,7 +23,7 @@
       overflow: hidden;
     }
     h1 {
-      background: #CF2C02; /* фирменный красный */
+      background: #CF2C02;
       color: #fff;
       margin: 0;
       padding: 1rem;
@@ -35,6 +34,207 @@
     .progress-bar {
       height: 100%;
       width: 0;
+      background: #CF2C02;
+      transition: width 0.3s ease;
+    }
+    .slide { padding: 2rem; }
+    .slide h2 {
+      margin-top: 0;
+      font-size: 1.25rem;
+      text-align: center;
+    }
+    .options label {
+      display: block;
+      margin: 0.75rem 0;
+      cursor: pointer;
+    }
+    .options input { margin-right: 0.5rem; }
+    .fields {
+      display: flex;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .fields input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 1rem;
+      font-size: 1rem;
+      background: #CF2C02;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    button:disabled {
+      background: #f5a46b;
+      cursor: not-allowed;
+    }
+    .result {
+      padding: 2rem;
+      text-align: center;
+    }
+    .result h2 { margin-bottom: 1rem; }
+    .result p { line-height: 1.5; }
+    .btn-link {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background: #007bff;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+    @keyframes pop {
+      0%,100% { transform: scale(1); }
+      50%     { transform: scale(1.02); }
+    }
+    .pop { animation: pop 0.2s ease; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Оценка склонности к отекам</h1>
+    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+    <div id="slideContainer"></div>
+  </div>  <script>
+    // сразу выполняем, так как скрипт внизу
+    const slides = [
+      { type: 'welcome', question: 'Узнать, есть ли у меня склонность к отекам.' },
+      { type: 'radio', name: 'age', question: '1. Возраст', options: [
+          { text: 'До 25 лет', value: 0 },
+          { text: '26–35 лет', value: 1 },
+          { text: '36–45 лет', value: 2 },
+          { text: 'Старше 45',  value: 3 }
+      ]},
+      { type: 'bmi', question: '2. Введите вес и рост (ИМТ: ≤22→0; 22–25→1; 25–30→2; >30→3)' },
+      { type: 'radio', name: 'life', question: '3. Образ жизни', options: [
+          { text: 'Активный весь день',          value: 0 },
+          { text: 'Сидячая работа + активность', value: 1 },
+          { text: 'Преимущественно сидячий',     value: 2 }
+      ]},
+      { type: 'radio', name: 'sport', question: '4. Физическая активность', options: [
+          { text: '3+ тренировки/нед',   value: 0 },
+          { text: '1–2 тренировки/нед', value: 1 },
+          { text: 'Никаких тренировок',  value: 2 }
+      ]},
+      { type: 'radio', name: 'cycle', question: '5. День менструального цикла', options: [
+          { text: '5–14 (фолликулярная)', value: 0 },
+          { text: '15–28 (лютеиновая)',    value: 2 },
+          { text: '1–4 или нет цикла',     value: 1 }
+      ]},
+      { type: 'radio', name: 'disease', question: '6. Хронические заболевания', options: [
+          { text: 'Нет',                     value: 0 },
+          { text: 'Есть, без симптомов',     value: 2 },
+          { text: 'Есть, с симптомами',      value: 3 }
+      ]},
+      { type: 'radio', name: 'meds', question: '7. Прием препаратов', options: [
+          { text: 'Нет',       value: 0 },
+          { text: 'Иногда',    value: 1 },
+          { text: 'Регулярно', value: 2 }
+      ]},
+      { type: 'radio', name: 'swelling', question: '8. Замечаете ли вы отеки?', options: [
+          { text: 'Нет',    value: 0 },
+          { text: 'Иногда', value: 1 },
+          { text: 'Часто',  value: 2 }
+      ]}
+    ];
+
+    let answers = {}, current = 0, total = slides.length - 1;
+    const progressBar = document.getElementById('progressBar'),
+          container   = document.getElementById('slideContainer');
+
+    function updateProgress() {
+      progressBar.style.width = (current > 0 ? (current/total)*100 : 0) + '%';
+    }
+    function popEffect() {
+      container.classList.add('pop');
+      setTimeout(() => container.classList.remove('pop'), 200);
+    }
+
+    function renderSlide() {
+      updateProgress();
+      container.innerHTML = '';
+      if (current > total) { showResult(); return; }
+
+      const slide = slides[current];
+      const el = document.createElement('div'); el.className = 'slide';
+      const q = document.createElement('h2'); q.textContent = slide.question; el.append(q);
+
+      if (slide.type === 'welcome') {
+        const btn = document.createElement('button');
+        btn.textContent = 'Начать';
+        btn.onclick = () => { current++; popEffect(); renderSlide(); };
+        el.append(btn);
+
+      } else if (slide.type === 'radio') {
+        const opts = document.createElement('div'); opts.className = 'options';
+        slide.options.forEach(o => {
+          const lbl = document.createElement('label');
+          lbl.innerHTML = `<input type="radio" name="${slide.name}" value="${o.value}"> ${o.text}`;
+          opts.append(lbl);
+        });
+        el.append(opts);
+        const btn = document.createElement('button');
+        btn.textContent = current < total ? 'Далее' : 'Завершить';
+        btn.disabled = true;
+        el.append(btn);
+        opts.addEventListener('input', () => btn.disabled = !opts.querySelector('input:checked'));
+        btn.onclick = () => { answers[slide.name] = +opts.querySelector('input:checked').value; current++; popEffect(); renderSlide(); };
+
+      } else if (slide.type === 'bmi') {
+        const flex = document.createElement('div'); flex.className = 'fields';
+        flex.innerHTML = `<input id="weight" type="number" placeholder="Вес (кг)"><input id="height" type="number" placeholder="Рост (см)">`;
+        el.append(flex);
+        const btn = document.createElement('button'); btn.textContent = 'Далее'; btn.disabled = true; el.append(btn);
+        flex.addEventListener('input', () => {
+          const w = flex.querySelector('#weight').value,
+                h = flex.querySelector('#height').value;
+          btn.disabled = !(w && h);
+        });
+        btn.onclick = () => {
+          const w = +flex.querySelector('#weight').value,
+                h = +flex.querySelector('#height').value/100,
+                bmi = w/(h*h);
+          answers.bmi = bmi > 30 ? 3 : bmi > 25 ? 2 : bmi > 22 ? 1 : 0;
+          current++; popEffect(); renderSlide();
+        };
+      }
+
+      container.append(el);
+    }
+
+    function showResult() {
+      updateProgress();
+      container.innerHTML = '<div class="result" id="resultBox"></div>';
+      const sum = Object.values(answers).reduce((a,b)=>a+b,0);
+      let title, text;
+      if (sum <= 6) {
+        title = 'Без склонности к отекам';
+        text  = 'Отеки маловероятны или кратковременны. Поддерживайте активность и водный баланс.';
+      } else if (sum <= 13) {
+        title = 'Умеренная склонность к отекам';
+        text  = 'Отеки могут появляться при цикле или малоподвижности. Добавьте движение и следите за натрием.';
+      } else {
+        title = 'Высокая склонность к отекам';
+        text  = 'Частые отеки могут сигнализировать о нарушениях. Обратитесь к врачу и контролируйте соль.';
+      }
+      const box = document.getElementById('resultBox');
+      box.innerHTML = `<h2>${title}</h2><p>${text}</p><a href=\"https://my.walk-walk.ru/\" class=\"btn-link\">К анти-отечной программе</a>`;
+      setTimeout(() => confetti({particleCount:150,spread:80,origin:{y:0.4}}),200);
+    }
+
+    // Initial render
+    renderSlide();
+  </script></body>
+</html>      width: 0;
       background: #CF2C02; /* фирменный красный */
       transition: width 0.3s ease;
     }
