@@ -7,34 +7,299 @@
   <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin:0; padding:0 }
+    * { box-sizing:border-box; margin:0; padding:0 }
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f0f4f8;
-      color: #333;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+      font-family:'Segoe UI',sans-serif;
+      background:#f0f4f8; color:#333;
+      display:flex; align-items:center; justify-content:center;
+      min-height:100vh;
     }
     .container {
       width:100%; max-width:400px;
-      background:#fff;
-      border-radius:8px;
-      overflow:hidden;
-      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+      background:#fff; border-radius:8px;
+      overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1);
     }
     h1 {
       margin:0;
-      background:#CF2C02;
-      color:#fff;
-      text-align:center;
-      padding:1rem;
+      background:#CF2C02; color:#fff;
+      text-align:center; padding:1rem;
       font-size:1.25rem;
     }
-    /* welcome */
-    #welcome {
+    .progress { height:6px; background:#ddd }
+    .progress-bar {
+      width:0; height:100%;
+      background:#CF2C02;
+      transition:width .3s ease;
+    }
+    #slide {
+      padding:2rem; text-align:center;
+    }
+    #slide h2 {
+      margin-bottom:1.5rem; font-size:1rem;
+    }
+    .options label {
+      display:block; cursor:pointer;
+      margin:.5rem 0; text-align:left;
+    }
+    .options input { margin-right:.5rem }
+    .fields {
+      display:flex; gap:1rem;
+      justify-content:center; margin-bottom:1rem;
+    }
+    .fields input {
+      flex:1; padding:.5rem;
+      border:1px solid #ccc; border-radius:4px;
       text-align:center;
+    }
+    #bmiValue {
+      margin-bottom:1rem; font-weight:bold;
+    }
+    button {
+      display:block; width:100%;
+      padding:.75rem; font-size:1rem;
+      background:#CF2C02; color:#fff;
+      border:none; border-radius:4px;
+      cursor:pointer; transition:background .2s;
+    }
+    button:disabled {
+      background:#f5a46b; cursor:not-allowed;
+    }
+    .result img {
+      max-width:100%; border-radius:8px;
+      margin-bottom:1rem;
+    }
+    .result h2 { margin-bottom:1rem }
+    .result p { margin-bottom:1rem; line-height:1.4 }
+    .result ul {
+      list-style:none; padding:0;
+      text-align:left; margin:1rem 0;
+    }
+    .result ul li { margin-bottom:.5rem }
+    .btn-link {
+      display:inline-block; margin-top:1rem;
+      padding:.5rem 1rem; background:#007bff;
+      color:#fff; text-decoration:none;
+      border-radius:4px;
+    }
+    .heart {
+      position:absolute; font-size:2rem; opacity:.8;
+      animation:floatUp 3s ease-out forwards;
+      pointer-events:none;
+    }
+    @keyframes floatUp {
+      0%   { transform:translateY(0) scale(1); opacity:1; }
+      100% { transform:translateY(-100px) scale(1.5); opacity:0; }
+    }
+    @keyframes pop {
+      0%,100% { transform:scale(1); }
+      50%     { transform:scale(1.02); }
+    }
+    .pop { animation:pop .2s ease; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Оценка склонности к отёкам</h1>
+    <div class="progress"><div id="progressBar" class="progress-bar"></div></div>
+    <div id="slide"></div>
+  </div>
+
+  <script>
+    const slides = [
+      { type:'radio', name:'age', question:'1. Возраст', options:[
+          {text:'До 25 лет',value:0},
+          {text:'26–35 лет',value:1},
+          {text:'36–45 лет',value:2},
+          {text:'Старше 45 лет',value:3}
+      ]},
+      { type:'bmi', question:'2. Вес (кг) и рост (см):' },
+      { type:'radio', name:'life', question:'3. Образ жизни', options:[
+          {text:'Активный весь день',value:0},
+          {text:'Сидячая работа + активность',value:1},
+          {text:'Преимущественно сидячий',value:2}
+      ]},
+      { type:'radio', name:'sport', question:'4. Физическая активность', options:[
+          {text:'3+ тренировки/нед.',value:0},
+          {text:'1–2 тренировки/нед.',value:1},
+          {text:'Никаких тренировок',value:2}
+      ]},
+      { type:'radio', name:'cycle', question:'5. День цикла', options:[
+          {text:'5–14 (фолликулярная)',value:0},
+          {text:'15–28 (лютеиновая)',value:2},
+          {text:'1–4 или нет цикла',value:1}
+      ]},
+      { type:'radio', name:'disease', question:'6. Хронические заболевания', options:[
+          {text:'Нет',value:0},
+          {text:'Есть, без симптомов',value:2},
+          {text:'Есть, с симптомами',value:3}
+      ]},
+      { type:'radio', name:'meds', question:'7. Приём препаратов', options:[
+          {text:'Нет',value:0},
+          {text:'Иногда',value:1},
+          {text:'Регулярно',value:2}
+      ]},
+      { type:'radio', name:'swelling', question:'8. Замечаете ли отёки?', options:[
+          {text:'Нет',value:0},
+          {text:'Иногда',value:1},
+          {text:'Часто',value:2}
+      ]}
+    ];
+
+    let answers={}, current=0, total=slides.length-1;
+    const slideEl = document.getElementById('slide'),
+          progEl  = document.getElementById('progressBar');
+
+    function updateProgress(){
+      progEl.style.width = ((current/total)*100) + '%';
+    }
+    function pop(){
+      slideEl.classList.add('pop');
+      setTimeout(()=>slideEl.classList.remove('pop'),200);
+    }
+
+    function render(){
+      updateProgress();
+      slideEl.innerHTML = '';
+      if(current>total) return showResult();
+
+      const s = slides[current],
+            wrp = document.createElement('div');
+      wrp.className = 'slide';
+      wrp.innerHTML = `<h2>${s.question}</h2>`;
+
+      if(s.type==='radio'){
+        const opts = document.createElement('div');
+        opts.className = 'options';
+        s.options.forEach(o=>{
+          const lbl = document.createElement('label');
+          lbl.innerHTML = `<input type="radio" name="${s.name}" value="${o.value}"> ${o.text}`;
+          opts.append(lbl);
+        });
+        wrp.append(opts);
+
+        const btn = document.createElement('button');
+        btn.textContent = current<total?'Далее':'Завершить';
+        btn.disabled = true;
+        wrp.append(btn);
+
+        opts.addEventListener('input',()=>{
+          btn.disabled = !opts.querySelector('input:checked');
+        });
+        btn.onclick = ()=>{
+          answers[s.name] = +opts.querySelector('input:checked').value;
+          current++; pop(); render();
+        };
+
+      } else if(s.type==='bmi'){
+        const flex = document.createElement('div');
+        flex.className = 'fields';
+        flex.innerHTML = `
+          <input id="weight" type="number" placeholder="Вес (кг)">
+          <input id="height" type="number" placeholder="Рост (см)">
+        `;
+        wrp.append(flex);
+
+        const disp = document.createElement('div');
+        disp.id = 'bmiValue';
+        wrp.append(disp);
+
+        const btn = document.createElement('button');
+        btn.textContent = 'Далее';
+        btn.disabled = true;
+        wrp.append(btn);
+
+        flex.addEventListener('input',()=>{
+          const w=parseFloat(flex.querySelector('#weight').value),
+                h=parseFloat(flex.querySelector('#height').value);
+          if(w>0&&h>0){
+            const bmi = w/((h/100)*(h/100));
+            disp.textContent = `Ваш ИМТ: ${bmi.toFixed(1)}`;
+            btn.disabled = false;
+          } else {
+            disp.textContent = '';
+            btn.disabled = true;
+          }
+        });
+
+        btn.onclick = ()=>{
+          const w=+flex.querySelector('#weight').value,
+                h=+flex.querySelector('#height').value/100,
+                bmi=w/(h*h);
+          answers.bmi = bmi>30?3:bmi>25?2:bmi>22?1:0;
+          current++; pop(); render();
+        };
+      }
+
+      slideEl.append(wrp);
+    }
+
+    function showResult(){
+      updateProgress();
+      slideEl.innerHTML = '';
+      const sum = Object.values(answers).reduce((a,b)=>a+b,0);
+      const box = document.createElement('div');
+      box.className = 'slide result';
+
+      if(sum<=6){
+        box.innerHTML=`
+          <img src="low.jpg" alt="">
+          <h2>Просто восхитительно! 🥳</h2>
+          <p>У вас низкая склонность к отёкам. 🔥</p>
+          <ul>
+            <li>🔸 Избегайте лишней соли</li>
+            <li>🔸 Шагательные тренировки</li>
+          </ul>
+          <a href="https://my.walk-walk.ru/" class="btn-link">К тренировкам</a>
+        `;
+      } else if(sum<=13){
+        box.innerHTML=`
+          <img src="medium.jpg" alt="">
+          <h2>Умеренная склонность 🤗</h2>
+          <p>Отеки могут появляться на фоне цикла, питания или малоподвижности.</p>
+          <ul>
+            <li>🔸 Контролируйте натрий</li>
+            <li>🔸 Лимфодренаж</li>
+          </ul>
+          <a href="https://my.walk-walk.ru/" class="btn-link">К тренировкам</a>
+        `;
+      } else {
+        box.innerHTML=`
+          <img src="high.jpg" alt="">
+          <h2>Высокая склонность 😔</h2>
+          <p>Отеки могут быть частыми — обратитесь к врачу.</p>
+          <ul>
+            <li>🔸 Кардиолог, эндокринолог</li>
+            <li>🔸 Контроль соли</li>
+          </ul>
+          <a href="https://my.walk-walk.ru/" class="btn-link">К тренировкам</a>
+        `;
+      }
+
+      slideEl.append(box);
+
+      setTimeout(()=>{
+        if(sum<=6){
+          confetti({ particleCount:200, spread:100, colors:['#FFCD00','#00D100','#0096FF','#FF007F'] });
+        } else if(sum<=13){
+          confetti({ particleCount:100, spread:60, gravity:0.3, colors:['#FFD700'] });
+        } else {
+          for(let i=0;i<12;i++){
+            const h=document.createElement('div');
+            h.className='heart';
+            h.textContent='❤️';
+            h.style.left=(10+Math.random()*80)+'%';
+            document.body.append(h);
+            setTimeout(()=>h.remove(),3000);
+          }
+        }
+      },200);
+    }
+
+    // сразу запускаем тест
+    render();
+  </script>
+</body>
+</html>      text-align:center;
       padding:2rem;
     }
     #welcome h2 {
