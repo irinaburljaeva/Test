@@ -270,7 +270,7 @@
       const box=document.createElement('div');
       box.className='result';
 
-      if(sum<=4){
+      if(sum<=5){
         box.innerHTML=`
           <img src="low.jpg" alt="">
           <h2>Просто восхитительно! 🥳 У вас низкая склонность к отёчности.</h2>
@@ -318,8 +318,8 @@
       container.append(box);
 
       setTimeout(() => {
-        const hearts = sum<=4 ? ['❤️'] : sum<=10 ? ['💛'] : ['💔'];
-        const count = sum<=4 ? 25 : sum<=10 ? 15 : 10;
+        const hearts = sum<=5 ? ['❤️'] : sum<=10 ? ['💛'] : ['💔'];
+        const count = sum<=5 ? 25 : sum<=10 ? 15 : 10;
         for (let i = 0; i < count; i++) {
           createFallingHeart(hearts[0]);
         }
