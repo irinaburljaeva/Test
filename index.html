@@ -24,7 +24,7 @@
       overflow: hidden;
     }
     h1 {
-      background: #e85d04;
+      background: #CF2C02; /* фирменный красный */
       color: #fff;
       margin: 0;
       padding: 1rem;
@@ -35,6 +35,38 @@
     .progress-bar {
       height: 100%;
       width: 0;
+      background: #CF2C02; /* фирменный красный */
+      transition: width 0.3s ease;
+    }
+    .slide { padding: 2rem; }
+    .slide h2 {
+      margin-top: 0;
+      font-size: 1.25rem;
+      text-align: center;
+    }
+    .options label {
+      display: block;
+      margin: 0.75rem 0;
+      cursor: pointer;
+    }
+    .options input { margin-right: 0.5rem; }
+    .fields {
+      display: flex;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .fields input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 1rem;
+      font-size      width: 0;
       background: #e85d04;
       transition: width 0.3s ease;
     }
