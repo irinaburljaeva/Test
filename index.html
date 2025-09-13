@@ -6,6 +6,7 @@
 <title>Спросите у карт — идти ли на Остров Стройности?</title>
 <meta name="description" content="Потяните карту и получите знак от вселенной: идти ли вам на обновлённый марафон «Остров Стройности». 7 секунд — и ответ!"/>
 <meta name="color-scheme" content="light only"/>
+
 <style>
   :root{
     --red:#CF2C02; --yellow:#FFBA08; --orange:#E85D04;
@@ -28,144 +29,56 @@
     background:var(--white); border-radius:calc(var(--radius) + 6px);
     box-shadow:var(--shadow); padding:20px 18px; position:relative; overflow:hidden;
   }
-  .badge{
-    position:absolute; top:14px; right:14px; font-size:12px; letter-spacing:.08em;
-    background:var(--yellow); color:#6a3b00; padding:6px 10px; border-radius:999px; font-weight:700;
-  }
   h1{margin:8px 0 8px; font-size:26px; line-height:1.15}
   p.lead{margin:0 0 16px; color:#444}
-
-  .deck{display:flex; justify-content:center; gap:12px; margin:18px 0 8px}
-  .tarot{
-    width:96px; height:148px; border-radius:14px; background:
-      repeating-linear-gradient(45deg,#f7f7f7 0 10px,#f1f1f1 10px 20px);
-    border:2px solid #eee; box-shadow:0 10px 18px rgba(0,0,0,.12);
-    transform-origin:center; transition:transform .25s ease, filter .25s ease; cursor:pointer;
-    position:relative; overflow:hidden;
-  }
-  .tarot:before{
-    content:"★"; position:absolute; inset:0; display:grid; place-items:center;
-    font-size:28px; color:#c7c7c7;
-  }
-  .tarot:hover{transform:translateY(-4px) rotate(-2deg); filter:brightness(1.02)}
-  .actions{display:grid; gap:10px; margin:14px 0 4px}
-  .btn{
-    appearance:none; border:0; border-radius:16px; padding:14px 16px; font-size:16px;
-    font-weight:800; cursor:pointer; transition:transform .06s ease, box-shadow .2s ease;
-  }
+  .deck{display:flex; justify-content:center; margin:18px 0}
+  .tarot{width:200px; height:300px; border-radius:16px; overflow:hidden; box-shadow:0 8px 18px rgba(0,0,0,.12); cursor:pointer;}
+  .tarot img{width:100%; height:100%; object-fit:cover}
+  .btn{appearance:none; border:0; border-radius:16px; padding:14px 16px; font-size:16px; font-weight:700; cursor:pointer;}
   .btn-primary{background:var(--red); color:#fff; box-shadow:0 10px 22px rgba(207,44,2,.28)}
-  .btn-primary:active{transform:translateY(1px)}
   .btn-secondary{background:#fff; color:#333; border:2px solid var(--gray)}
-  .footer{text-align:center; font-size:12px; color:#666; margin-top:12px}
-  .brand{display:flex; align-items:center; gap:8px; font-weight:700; margin-top:10px}
-  .dot{width:10px; height:10px; border-radius:50%; background:var(--red)}
-
-  .progress{display:flex; align-items:center; gap:10px; font-size:12px; color:#666; margin:8px 0 0}
-  .bar{height:8px; background:#f2f2f2; border-radius:999px; overflow:hidden; flex:1}
-  .bar>i{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--yellow),var(--orange)); transition:width .8s ease}
-
-  /* Modal */
-  .modal{position:fixed; inset:0; display:none; place-items:center; padding:20px;
-    background:rgba(0,0,0,.35); backdrop-filter:blur(4px); z-index:10;}
+  .modal{position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.35); backdrop-filter:blur(4px);}
   .modal.open{display:grid}
-  .sheet{width:min(520px,100%); background:#fff; border-radius:26px; box-shadow:var(--shadow);
-    padding:18px; position:relative; overflow:hidden;}
-  .ribbon{position:absolute; inset:auto -40px auto -40px; top:0; height:110px;
-    background:conic-gradient(from 0deg at 50% 50%, #fff 0 20%, rgba(255,186,8,.16) 20% 60%, rgba(232,93,4,.14) 60% 100%);
-    filter:blur(18px); opacity:.9; pointer-events:none;}
-  .result-title{margin:4px 0 6px; font-size:22px}
-  .pill{display:inline-block; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px}
-  .pill-yes{background:rgba(207,44,2,.12); color:var(--red)}
-  .pill-soft{background:rgba(232,93,4,.14); color:var(--orange)}
-  .pill-joke{background:rgba(0,0,0,.06); color:#333}
-  .result-card{margin:12px 0 14px; border:2px dashed #eee; border-radius:18px; padding:14px;
-    background:radial-gradient(600px 140px at 50% -40%, rgba(255,186,8,.18), transparent 50%),#fff;}
+  .sheet{width:min(520px,100%); background:#fff; border-radius:26px; box-shadow:var(--shadow); padding:18px; text-align:center;}
+  .result-img{width:100%; max-height:320px; object-fit:cover; border-radius:16px; margin-bottom:12px}
+  .result-text{font-size:16px; margin:10px 0 16px}
   .cta{display:grid; gap:10px; margin-top:12px}
-  .note{font-size:12px; color:#666; text-align:center}
-
-  /* Flip card */
-  .flip{perspective:1000px; width:180px; height:260px; margin:0 auto 10px; position:relative;}
-  .flip-inner{position:absolute; inset:0; transform-style:preserve-3d; transition:transform .8s ease;}
-  .flip.flipped .flip-inner{transform:rotateY(180deg)}
-  .flip-face{position:absolute; inset:0; backface-visibility:hidden; border-radius:20px; overflow:hidden;
-    box-shadow:0 10px 24px rgba(0,0,0,.18);}
-  .flip-front{background:repeating-linear-gradient(45deg,#fafafa 0 12px,#f2f2f2 12px 24px); display:grid; place-items:center; color:#bbb; font-size:28px}
-  .flip-back{background:#fff; transform:rotateY(180deg); border:2px solid var(--gray); display:grid; place-items:center; padding:18px}
-  .flip-back .answer{text-align:center; padding:0 10px; font-size:16px; line-height:1.3}
-
-  .kpi{margin-top:8px; font-size:12px; color:#666; text-align:center}
-  .kpi b{color:#000}
-
-  @media (min-width:540px){ h1{font-size:28px} }
 </style>
 </head>
 <body>
   <main class="app">
-    <section class="card" aria-labelledby="title">
-      <div class="badge">7 секунд</div>
-      <h1 id="title">Спросите у карт: идти ли на <span style="color:#E85D04;font-weight:800">Остров Стройности</span> сейчас?</h1>
-      <p class="lead">Сконцентрируйтесь на вопросе, сделайте вдох и потяните одну карту. Вселенная любит решительных ✨</p>
+    <section class="card">
+      <h1>Спросите у карт: идти ли на <span style="color:#E85D04;font-weight:800">Остров Стройности</span> сейчас?</h1>
+      <p class="lead">Сконцентрируйтесь на вопросе и потяните карту ✨</p>
 
-      <div class="deck" role="list" aria-label="Колода">
-        <button class="tarot" aria-label="Потянуть карту 1"></button>
-        <button class="tarot" aria-label="Потянуть карту 2"></button>
-        <button class="tarot" aria-label="Потянуть карту 3"></button>
+      <div class="deck">
+        <button class="tarot" id="tarotBtn"><img id="taroBack" src="taro.png" alt="Рубашка карты"></button>
       </div>
 
       <div class="actions">
         <button class="btn btn-primary" id="draw">Потянуть карту</button>
-        <button class="btn btn-secondary" id="shuffle" aria-label="Перетасовать колоду">Перетасовать ✦</button>
-      </div>
-
-      <div class="progress" aria-hidden="true">
-        <span>Сигнал вселенной</span>
-        <div class="bar"><i id="bar"></i></div>
-      </div>
-
-      <div class="kpi">Уже спросили: <b id="asked">1 024</b> человек</div>
-
-      <div class="footer">
-        Нажимая на карту, вы соглашаетесь прислушаться к себе, а не к прокрастинации 😊
-        <div class="brand"><i class="dot"></i> ШАГАЙ ДОМА</div>
       </div>
     </section>
   </main>
 
   <!-- Modal -->
-  <aside class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="rtitle">
+  <aside class="modal" id="modal">
     <div class="sheet">
-      <div class="ribbon"></div>
-
-      <div class="flip" id="flip">
-        <div class="flip-inner">
-          <div class="flip-face flip-front">★</div>
-          <div class="flip-face flip-back">
-            <div class="answer" id="answer">Ответ готов…</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="result-card">
-        <span class="pill" id="pill">ПОДСКАЗКА</span>
-        <h2 class="result-title" id="rtitle">Ваш знак получен</h2>
-        <p id="text">…</p>
-      </div>
-
+      <img id="resultImg" class="result-img" src="" alt="Карта"/>
+      <p id="resultText" class="result-text"></p>
       <div class="cta">
-        <a id="cta" class="btn btn-primary" href="https://walk-walk.ru/happyisland?utm_source=website&utm_medium=app&utm_campaign=taro&utm_term=smm" target="_blank" rel="noopener">Иду на «Остров Стройности»</a>
+        <a id="cta" class="btn btn-primary" href="#" target="_blank">Перейти →</a>
         <button class="btn btn-secondary" id="again">Потянуть ещё раз</button>
       </div>
-
-      <p class="note">Подсказки — это про выбор. Вы решаете, когда начать. Мы — чтобы получилось.</p>
     </div>
   </aside>
 
 <script>
 (function(){
-  const URL_MAIN = "https://walk-walk.ru/happyisland?utm_source=website&utm_medium=app&utm_campaign=taro&utm_term=smm";
-  const URL_CLUB = URL_MAIN; // по твоему ТЗ шутливые 5% ведут на ту же ссылку
+  const URL_INTENSIVE = "https://walk-walk.ru/happyisland?utm_source=website&utm_medium=app&utm_campaign=taro&utm_term=smm";
+  const URL_CLUB      = "https://walk-walk.ru/?utm_source=website&utm_medium=app&utm_campaign=taro&utm_term=club";
 
-  // === ПУЛ ПРЕДСКАЗАНИЙ ===
+  // --- Пул карт и текстов ---
   const YES = [
     "Вселенная дала свой знак! Вам точно нужно на «Остров Стройности».",
     "Карта предсказывает: первые шаги уже скоро изменят вашу жизнь!",
@@ -177,7 +90,7 @@
     "Ваш путь освещён. Первый шаг начинается здесь.",
     "Карта подтвердила: сегодня лучший день, чтобы стартовать.",
     "Знак получен: вперёд на «Остров Стройности»!"
-  ].map(t => ({ text:t, tone:"yes", link:URL_MAIN, cta:"Иду на «Остров Стройности»" }));
+  ].map((t,i)=>({img:`karta${i+2}.png`,text:t,link:URL_INTENSIVE,tone:"yes"}));
 
   const SOFT = [
     "Время для перемен близко — сделайте первый шаг бережно.",
@@ -185,143 +98,47 @@
     "Да, но мягко: выберите свой уровень и двигайтесь в своём темпе.",
     "Карта показывает: сила маленьких шагов изменит всё.",
     "Сегодня знак особенно ясен: начните мягко, и всё получится."
-  ].map(t => ({ text:t, tone:"soft", link:URL_MAIN, cta:"Начать бережно →" }));
+  ].map((t,i)=>({img:`karta${i+7}.png`,text:t,link:URL_INTENSIVE,tone:"soft"}));
 
   const JOKE = [
     "Увы, карты показали, что вам лучше купить просто абонемент в клуб…",
     "Карта намекнула: вы и так слишком харизматичны 😏 Вам достаточно клуба.",
     "Вселенная пошутила: остров подождёт, а клуб открыт всегда."
-  ].map(t => ({ text:t, tone:"joke", link:URL_CLUB, cta:"Перейти →" }));
+  ].map((t)=>({img:"karta1.png",text:t,link:URL_CLUB,tone:"joke"}));
 
-  // веса вероятностей
-  const WEIGHTS = { yes: 0.85, soft: 0.10, joke: 0.05 };
+  const WEIGHTS = { yes:0.85, soft:0.10, joke:0.05 };
 
   function weightedPick(){
     const r = Math.random();
-    if (r < WEIGHTS.yes) return YES[Math.floor(Math.random()*YES.length)];
-    if (r < WEIGHTS.yes + WEIGHTS.soft) return SOFT[Math.floor(Math.random()*SOFT.length)];
+    if(r<WEIGHTS.yes) return YES[Math.floor(Math.random()*YES.length)];
+    if(r<WEIGHTS.yes+WEIGHTS.soft) return SOFT[Math.floor(Math.random()*SOFT.length)];
     return JOKE[Math.floor(Math.random()*JOKE.length)];
   }
 
-  // UI элементы
-  const deck = [...document.querySelectorAll('.tarot')];
-  const drawBtn = document.getElementById('draw');
-  const shuffleBtn = document.getElementById('shuffle');
-  const bar = document.getElementById('bar');
+  // --- DOM ---
   const modal = document.getElementById('modal');
-  const pill = document.getElementById('pill');
-  const rtitle = document.getElementById('rtitle');
-  const text = document.getElementById('text');
+  const resultImg = document.getElementById('resultImg');
+  const resultText = document.getElementById('resultText');
   const cta = document.getElementById('cta');
-  const again = document.getElementById('again');
-  const flip = document.getElementById('flip');
-  const answer = document.getElementById('answer');
-  const asked = document.getElementById('asked');
+  const drawBtn = document.getElementById('draw');
+  const againBtn = document.getElementById('again');
+  const tarotBtn = document.getElementById('tarotBtn');
 
-  let busy = false;
-
-  function animateBar(){
-    bar.style.width = '0%';
-    requestAnimationFrame(()=>{ setTimeout(()=>{ bar.style.width = '100%' }, 60);});
-  }
-
-  function shuffle(){
-    if(busy) return;
-    deck.forEach((el)=>{
-      const r = (Math.random()*6-3); // -3..3 deg
-      const y = (Math.random()*6-3); // -3..3 px
-      el.style.transform = `translateY(${y}px) rotate(${r}deg)`;
-    });
-  }
-
-  function pillClass(tone){
-    return tone==='yes' ? 'pill-yes' : tone==='soft' ? 'pill-soft' : 'pill-joke';
-  }
-
-  function titleByTone(tone){
-    if(tone==='yes') return 'Знак получен: ДА';
-    if(tone==='soft') return 'Знак получен: ДА, но бережно';
-    return 'Редкий знак: шутка от вселенной';
-  }
-
-  function confettiBurst(){
-    // простая конфетти-анимация без библиотек
-    const N = 40;
-    for(let i=0;i<N;i++){
-      const p = document.createElement('i');
-      const size = 6 + Math.random()*8;
-      p.style.position='fixed';
-      p.style.left = (10 + Math.random()*80) + 'vw';
-      p.style.top = '-20px';
-      p.style.width = size+'px';
-      p.style.height = size+'px';
-      p.style.background = ['#CF2C02','#FFBA08','#E85D04','#D9D9D9'][i%4];
-      p.style.opacity = .9;
-      p.style.borderRadius = (Math.random()>.5?'50%':'4px');
-      p.style.zIndex = 9999;
-      p.style.transition = `transform ${1.2+Math.random()}s ease-out, opacity .6s ${.9+Math.random()/4}s`;
-      document.body.appendChild(p);
-      requestAnimationFrame(()=>{
-        const tx = (Math.random()*2-1)*120;
-        const ty = 110 + Math.random()*120;
-        p.style.transform = `translate(${tx}vw, ${ty}vh) rotate(${(Math.random()*360)|0}deg)`;
-        setTimeout(()=>{p.style.opacity=0;}, 700);
-        setTimeout(()=>{p.remove();}, 2000);
-      });
-    }
-  }
-
-  function openResult(){
-    modal.classList.add('open');
-    setTimeout(()=>flip.classList.add('flipped'), 80);
-  }
-
-  function closeResult(){
-    modal.classList.remove('open');
-    flip.classList.remove('flipped');
-  }
+  function openModal(){ modal.classList.add('open'); }
+  function closeModal(){ modal.classList.remove('open'); }
 
   function draw(){
-    if(busy) return;
-    busy = true;
-    animateBar();
-    setTimeout(()=>{
-      const res = weightedPick();
-      answer.textContent = (res.tone==='joke' ? '😉' : '★');
-      pill.className = 'pill ' + pillClass(res.tone);
-      rtitle.textContent = titleByTone(res.tone);
-      text.textContent = res.text;
-      cta.textContent = res.cta || 'Перейти →';
-      cta.href = res.link;
-
-      openResult();
-      if(res.tone==='yes') confettiBurst(); // вау-эффект на «ДА»
-
-      // обновим счётчик «спросили»
-      try{
-        const base = parseInt((localStorage.getItem('askedCount')||'1024'),10);
-        const next = base + 1;
-        localStorage.setItem('askedCount', String(next));
-        asked.textContent = next.toLocaleString('ru-RU');
-      }catch(e){ /* no op */ }
-
-      busy = false;
-    }, 800);
+    const card = weightedPick();
+    resultImg.src = card.img;
+    resultText.textContent = card.text;
+    cta.href = card.link;
+    cta.textContent = (card.tone==="joke") ? "В клуб →" : "Иду на «Остров Стройности»";
+    openModal();
   }
 
-  // события
-  deck.forEach(el=> el.addEventListener('click', draw));
   drawBtn.addEventListener('click', draw);
-  shuffleBtn.addEventListener('click', shuffle);
-  again.addEventListener('click', ()=>{ closeResult(); setTimeout(shuffle, 260); });
-
-  // init
-  shuffle();
-  // инициализируем локальный счётчик
-  try{
-    if(!localStorage.getItem('askedCount')) localStorage.setItem('askedCount','1024');
-    asked.textContent = parseInt(localStorage.getItem('askedCount'),10).toLocaleString('ru-RU');
-  }catch(e){ /* no op */ }
+  tarotBtn.addEventListener('click', draw);
+  againBtn.addEventListener('click', ()=>{ closeModal(); });
 })();
 </script>
 </body>
