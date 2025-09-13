@@ -1,345 +1,328 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Оценка склонности к отёкам</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>Спросите у карт — идти ли на Остров Стройности?</title>
+<meta name="description" content="Потяните карту и получите знак от вселенной: идти ли вам на обновлённый марафон «Остров Стройности». 7 секунд — и ответ!"/>
+<meta name="color-scheme" content="light only"/>
+<style>
+  :root{
+    --red:#CF2C02; --yellow:#FFBA08; --orange:#E85D04;
+    --white:#fff; --gray:#D9D9D9; --ink:#1a1a1a;
+    --radius:20px; --shadow:0 10px 30px rgba(0,0,0,.12);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 800px at 80% -10%, rgba(255,186,8,.25), transparent 60%),
+      radial-gradient(900px 700px at -10% 110%, rgba(232,93,4,.18), transparent 60%),
+      linear-gradient(180deg,#fff,#fff);
+    display:flex; align-items:center; justify-content:center; padding:16px;
+  }
+  .app{width:min(520px,100%);}
+  .card{
+    background:var(--white); border-radius:calc(var(--radius) + 6px);
+    box-shadow:var(--shadow); padding:20px 18px; position:relative; overflow:hidden;
+  }
+  .badge{
+    position:absolute; top:14px; right:14px; font-size:12px; letter-spacing:.08em;
+    background:var(--yellow); color:#6a3b00; padding:6px 10px; border-radius:999px; font-weight:700;
+  }
+  h1{margin:8px 0 8px; font-size:26px; line-height:1.15}
+  p.lead{margin:0 0 16px; color:#444}
 
-  <link rel="preload" href="low.jpg" as="image">
-  <link rel="preload" href="medium.jpg" as="image">
-  <link rel="preload" href="high.jpg" as="image">
+  .deck{display:flex; justify-content:center; gap:12px; margin:18px 0 8px}
+  .tarot{
+    width:96px; height:148px; border-radius:14px; background:
+      repeating-linear-gradient(45deg,#f7f7f7 0 10px,#f1f1f1 10px 20px);
+    border:2px solid #eee; box-shadow:0 10px 18px rgba(0,0,0,.12);
+    transform-origin:center; transition:transform .25s ease, filter .25s ease; cursor:pointer;
+    position:relative; overflow:hidden;
+  }
+  .tarot:before{
+    content:"★"; position:absolute; inset:0; display:grid; place-items:center;
+    font-size:28px; color:#c7c7c7;
+  }
+  .tarot:hover{transform:translateY(-4px) rotate(-2deg); filter:brightness(1.02)}
+  .actions{display:grid; gap:10px; margin:14px 0 4px}
+  .btn{
+    appearance:none; border:0; border-radius:16px; padding:14px 16px; font-size:16px;
+    font-weight:800; cursor:pointer; transition:transform .06s ease, box-shadow .2s ease;
+  }
+  .btn-primary{background:var(--red); color:#fff; box-shadow:0 10px 22px rgba(207,44,2,.28)}
+  .btn-primary:active{transform:translateY(1px)}
+  .btn-secondary{background:#fff; color:#333; border:2px solid var(--gray)}
+  .footer{text-align:center; font-size:12px; color:#666; margin-top:12px}
+  .brand{display:flex; align-items:center; gap:8px; font-weight:700; margin-top:10px}
+  .dot{width:10px; height:10px; border-radius:50%; background:var(--red)}
 
-  <style>
-    * { box-sizing: border-box; margin:0; padding:0 }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f0f4f8;
-      color: #333;
-      padding: 2rem;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background: #fff;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    h1 {
-      background: #CF2C02;
-      color: #fff;
-      text-align: center;
-      padding: 1rem;
-      font-size: 1.5rem;
-    }
-    .progress { height:6px; background:#ddd }
-    .progress-bar {
-      width:0;
-      height:100%;
-      background:#CF2C02;
-      transition:width 0.4s ease;
-    }
-    .slide {
-      padding:2rem;
-      text-align:center;
-      opacity: 0;
-      transform: translateY(10px);
-      animation: fadeIn 0.4s forwards;
-    }
-    @keyframes fadeIn {
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fall {
-      0% { transform: translateY(0); opacity: 1; }
-      100% { transform: translateY(100vh); opacity: 0; }
-    }
-    .slide h2 { margin-bottom:1.5rem; font-size:1.25rem; }
-    .options label { display:block; margin:.75rem 0; cursor:pointer; text-align:left; }
-    .options input { margin-right:.5rem }
-    .fields { display:flex; gap:1rem; justify-content:center; margin-bottom:1rem; }
-    .fields input { flex:1; padding:.5rem; border:1px solid #ccc; border-radius:4px; text-align:center; }
-    #bmiValue, #saltResult { margin-bottom:1rem; font-weight:bold; }
-    button {
-      display:block; width:100%; padding:.75rem; font-size:1rem;
-      background:#CF2C02; color:#fff; border:none; border-radius:4px;
-      cursor:pointer; transition:transform 0.2s, background 0.3s;
-    }
-    button:hover:not(:disabled) { transform: scale(1.02); background:#e54c00; }
-    button:disabled { background:#f5a46b; cursor:not-allowed; }
-    .result { padding:2rem; text-align:center; animation: fadeIn 0.6s forwards; }
-    .result img { max-width:100%; border-radius:8px; margin-bottom:1rem; }
-    .result h2 { margin-bottom:1rem; font-weight:bold }
-    .result p { margin-bottom:1rem; line-height:1.5; font-weight: normal; }
-    .result ul { list-style:none; padding-left:0; text-align:left; margin:1rem auto; max-width:500px; }
-    .result ul li { margin-bottom:.5rem }
-    .btn-link {
-      display:inline-block; margin-top:1rem; padding:.5rem 1rem;
-      background:#007bff; color:#fff; text-decoration:none; border-radius:4px;
-      transition: background 0.3s ease;
-    }
-    .btn-link:hover { background:#005fcc; }
-  </style>
+  .progress{display:flex; align-items:center; gap:10px; font-size:12px; color:#666; margin:8px 0 0}
+  .bar{height:8px; background:#f2f2f2; border-radius:999px; overflow:hidden; flex:1}
+  .bar>i{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--yellow),var(--orange)); transition:width .8s ease}
+
+  /* Modal */
+  .modal{position:fixed; inset:0; display:none; place-items:center; padding:20px;
+    background:rgba(0,0,0,.35); backdrop-filter:blur(4px); z-index:10;}
+  .modal.open{display:grid}
+  .sheet{width:min(520px,100%); background:#fff; border-radius:26px; box-shadow:var(--shadow);
+    padding:18px; position:relative; overflow:hidden;}
+  .ribbon{position:absolute; inset:auto -40px auto -40px; top:0; height:110px;
+    background:conic-gradient(from 0deg at 50% 50%, #fff 0 20%, rgba(255,186,8,.16) 20% 60%, rgba(232,93,4,.14) 60% 100%);
+    filter:blur(18px); opacity:.9; pointer-events:none;}
+  .result-title{margin:4px 0 6px; font-size:22px}
+  .pill{display:inline-block; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px}
+  .pill-yes{background:rgba(207,44,2,.12); color:var(--red)}
+  .pill-soft{background:rgba(232,93,4,.14); color:var(--orange)}
+  .pill-joke{background:rgba(0,0,0,.06); color:#333}
+  .result-card{margin:12px 0 14px; border:2px dashed #eee; border-radius:18px; padding:14px;
+    background:radial-gradient(600px 140px at 50% -40%, rgba(255,186,8,.18), transparent 50%),#fff;}
+  .cta{display:grid; gap:10px; margin-top:12px}
+  .note{font-size:12px; color:#666; text-align:center}
+
+  /* Flip card */
+  .flip{perspective:1000px; width:180px; height:260px; margin:0 auto 10px; position:relative;}
+  .flip-inner{position:absolute; inset:0; transform-style:preserve-3d; transition:transform .8s ease;}
+  .flip.flipped .flip-inner{transform:rotateY(180deg)}
+  .flip-face{position:absolute; inset:0; backface-visibility:hidden; border-radius:20px; overflow:hidden;
+    box-shadow:0 10px 24px rgba(0,0,0,.18);}
+  .flip-front{background:repeating-linear-gradient(45deg,#fafafa 0 12px,#f2f2f2 12px 24px); display:grid; place-items:center; color:#bbb; font-size:28px}
+  .flip-back{background:#fff; transform:rotateY(180deg); border:2px solid var(--gray); display:grid; place-items:center; padding:18px}
+  .flip-back .answer{text-align:center; padding:0 10px; font-size:16px; line-height:1.3}
+
+  .kpi{margin-top:8px; font-size:12px; color:#666; text-align:center}
+  .kpi b{color:#000}
+
+  @media (min-width:540px){ h1{font-size:28px} }
+</style>
 </head>
 <body>
+  <main class="app">
+    <section class="card" aria-labelledby="title">
+      <div class="badge">7 секунд</div>
+      <h1 id="title">Спросите у карт: идти ли на <span style="color:#E85D04;font-weight:800">Остров Стройности</span> сейчас?</h1>
+      <p class="lead">Сконцентрируйтесь на вопросе, сделайте вдох и потяните одну карту. Вселенная любит решительных ✨</p>
 
-  <div class="container">
-    <h1>Оценка склонности к отёкам</h1>
-    <div class="progress"><div id="progressBar" class="progress-bar"></div></div>
-    <div id="slideContainer"></div>
-  </div>
+      <div class="deck" role="list" aria-label="Колода">
+        <button class="tarot" aria-label="Потянуть карту 1"></button>
+        <button class="tarot" aria-label="Потянуть карту 2"></button>
+        <button class="tarot" aria-label="Потянуть карту 3"></button>
+      </div>
 
-  <script>
-    const slides = [
-      { type:'welcome', question:'Узнать, есть ли у меня склонность к отёкам?' },
-      { type:'radio', name:'age', question:'1. Возраст', options:[
-        {text:'До 25 лет',value:0},{text:'26–35 лет',value:1},
-        {text:'36–45 лет',value:2},{text:'Старше 45',value:3}
-      ]},
-      { type:'bmi', question:'2. Введите ваш вес и рост — и мы рассчитаем ваш ИМТ (индекс массы тела). ИМТ помогает понять, есть ли у человека лишний вес.' },
-      { type:'radio', name:'life', question:'3. Образ жизни', options:[
-        {text:'Активный весь день',value:0},
-        {text:'Сидячая работа + активный образ жизни',value:1},
-        {text:'Преимущественно сидячий',value:2}
-      ]},
-      { type:'radio', name:'sport', question:'4. Физическая активность', options:[
-        {text:'3+ тренировки в неделю',value:0},
-        {text:'1–2 тренировки в неделю',value:1},
-        {text:'Никаких тренировок',value:2}
-      ]},
-      { type:'radio', name:'cycle', question:'5. День цикла', options:[
-        {text:'5–14 (фолликулярная)',value:0},
-        {text:'15–28 (лютеиновая)',value:2},
-        {text:'1–4 или нет цикла',value:1}
-      ]},
-      { type:'radio', name:'disease', question:'6. Хронические заболевания', options:[
-        {text:'Нет',value:0},
-        {text:'Есть, без симптомов',value:2},
-        {text:'Есть, с симптомами',value:3}
-      ]},
-      { type:'radio', name:'meds', question:'7. Приём препаратов', options:[
-        {text:'Нет',value:0},{text:'Иногда',value:1},{text:'Регулярно',value:2}
-      ]},
-      { 
-        type:'salt', 
-        question:'8. Какие из этих продуктов вы едите каждый день? (Выберите все подходящие)' 
-      }
-    ];
+      <div class="actions">
+        <button class="btn btn-primary" id="draw">Потянуть карту</button>
+        <button class="btn btn-secondary" id="shuffle" aria-label="Перетасовать колоду">Перетасовать ✦</button>
+      </div>
 
-    const saltProducts = [
-      {text:'Хлеб, выпечка', value:1},
-      {text:'Сыры', value:2},
-      {text:'Колбаса, сосиски, ветчина', value:2.5},
-      {text:'Консервы', value:1.5},
-      {text:'Фастфуд', value:3},
-      {text:'Солёные снеки (чипсы, сухарики, орешки)', value:2},
-      {text:'Маринованные продукты', value:2}
-    ];
+      <div class="progress" aria-hidden="true">
+        <span>Сигнал вселенной</span>
+        <div class="bar"><i id="bar"></i></div>
+      </div>
 
-    let answers={}, current=0, total=slides.length-1;
-    const container=document.getElementById('slideContainer'),
-          progressBar=document.getElementById('progressBar');
+      <div class="kpi">Уже спросили: <b id="asked">1 024</b> человек</div>
 
-    function updateProgress(){
-      progressBar.style.width=(current>0?(current/total)*100:0)+'%';
+      <div class="footer">
+        Нажимая на карту, вы соглашаетесь прислушаться к себе, а не к прокрастинации 😊
+        <div class="brand"><i class="dot"></i> ШАГАЙ ДОМА</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <aside class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="rtitle">
+    <div class="sheet">
+      <div class="ribbon"></div>
+
+      <div class="flip" id="flip">
+        <div class="flip-inner">
+          <div class="flip-face flip-front">★</div>
+          <div class="flip-face flip-back">
+            <div class="answer" id="answer">Ответ готов…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-card">
+        <span class="pill" id="pill">ПОДСКАЗКА</span>
+        <h2 class="result-title" id="rtitle">Ваш знак получен</h2>
+        <p id="text">…</p>
+      </div>
+
+      <div class="cta">
+        <a id="cta" class="btn btn-primary" href="https://walk-walk.ru/happyisland?utm_source=website&utm_medium=app&utm_campaign=taro&utm_term=smm" target="_blank" rel="noopener">Иду на «Остров Стройности»</a>
+        <button class="btn btn-secondary" id="again">Потянуть ещё раз</button>
+      </div>
+
+      <p class="note">Подсказки — это про выбор. Вы решаете, когда начать. Мы — чтобы получилось.</p>
+    </div>
+  </aside>
+
+<script>
+(function(){
+  const URL_MAIN = "https://walk-walk.ru/happyisland?utm_source=website&utm_medium=app&utm_campaign=taro&utm_term=smm";
+  const URL_CLUB = URL_MAIN; // по твоему ТЗ шутливые 5% ведут на ту же ссылку
+
+  // === ПУЛ ПРЕДСКАЗАНИЙ ===
+  const YES = [
+    "Вселенная дала свой знак! Вам точно нужно на «Остров Стройности».",
+    "Карта предсказывает: первые шаги уже скоро изменят вашу жизнь!",
+    "Да! Энергия перемен сильна — начните прямо сейчас.",
+    "Вселенная шепчет: именно сейчас самое время для вашего шага.",
+    "Карта указывает дорогу к лёгкости и энергии — на «Остров Стройности».",
+    "Да, и результат придёт быстрее, чем вы думаете.",
+    "Сигнал ясен: пора обновиться — отправляйтесь на «Остров Стройности».",
+    "Ваш путь освещён. Первый шаг начинается здесь.",
+    "Карта подтвердила: сегодня лучший день, чтобы стартовать.",
+    "Знак получен: вперёд на «Остров Стройности»!"
+  ].map(t => ({ text:t, tone:"yes", link:URL_MAIN, cta:"Иду на «Остров Стройности»" }));
+
+  const SOFT = [
+    "Время для перемен близко — сделайте первый шаг бережно.",
+    "Карта советует: начните без спешки, но начните.",
+    "Да, но мягко: выберите свой уровень и двигайтесь в своём темпе.",
+    "Карта показывает: сила маленьких шагов изменит всё.",
+    "Сегодня знак особенно ясен: начните мягко, и всё получится."
+  ].map(t => ({ text:t, tone:"soft", link:URL_MAIN, cta:"Начать бережно →" }));
+
+  const JOKE = [
+    "Увы, карты показали, что вам лучше купить просто абонемент в клуб…",
+    "Карта намекнула: вы и так слишком харизматичны 😏 Вам достаточно клуба.",
+    "Вселенная пошутила: остров подождёт, а клуб открыт всегда."
+  ].map(t => ({ text:t, tone:"joke", link:URL_CLUB, cta:"Перейти →" }));
+
+  // веса вероятностей
+  const WEIGHTS = { yes: 0.85, soft: 0.10, joke: 0.05 };
+
+  function weightedPick(){
+    const r = Math.random();
+    if (r < WEIGHTS.yes) return YES[Math.floor(Math.random()*YES.length)];
+    if (r < WEIGHTS.yes + WEIGHTS.soft) return SOFT[Math.floor(Math.random()*SOFT.length)];
+    return JOKE[Math.floor(Math.random()*JOKE.length)];
+  }
+
+  // UI элементы
+  const deck = [...document.querySelectorAll('.tarot')];
+  const drawBtn = document.getElementById('draw');
+  const shuffleBtn = document.getElementById('shuffle');
+  const bar = document.getElementById('bar');
+  const modal = document.getElementById('modal');
+  const pill = document.getElementById('pill');
+  const rtitle = document.getElementById('rtitle');
+  const text = document.getElementById('text');
+  const cta = document.getElementById('cta');
+  const again = document.getElementById('again');
+  const flip = document.getElementById('flip');
+  const answer = document.getElementById('answer');
+  const asked = document.getElementById('asked');
+
+  let busy = false;
+
+  function animateBar(){
+    bar.style.width = '0%';
+    requestAnimationFrame(()=>{ setTimeout(()=>{ bar.style.width = '100%' }, 60);});
+  }
+
+  function shuffle(){
+    if(busy) return;
+    deck.forEach((el)=>{
+      const r = (Math.random()*6-3); // -3..3 deg
+      const y = (Math.random()*6-3); // -3..3 px
+      el.style.transform = `translateY(${y}px) rotate(${r}deg)`;
+    });
+  }
+
+  function pillClass(tone){
+    return tone==='yes' ? 'pill-yes' : tone==='soft' ? 'pill-soft' : 'pill-joke';
+  }
+
+  function titleByTone(tone){
+    if(tone==='yes') return 'Знак получен: ДА';
+    if(tone==='soft') return 'Знак получен: ДА, но бережно';
+    return 'Редкий знак: шутка от вселенной';
+  }
+
+  function confettiBurst(){
+    // простая конфетти-анимация без библиотек
+    const N = 40;
+    for(let i=0;i<N;i++){
+      const p = document.createElement('i');
+      const size = 6 + Math.random()*8;
+      p.style.position='fixed';
+      p.style.left = (10 + Math.random()*80) + 'vw';
+      p.style.top = '-20px';
+      p.style.width = size+'px';
+      p.style.height = size+'px';
+      p.style.background = ['#CF2C02','#FFBA08','#E85D04','#D9D9D9'][i%4];
+      p.style.opacity = .9;
+      p.style.borderRadius = (Math.random()>.5?'50%':'4px');
+      p.style.zIndex = 9999;
+      p.style.transition = `transform ${1.2+Math.random()}s ease-out, opacity .6s ${.9+Math.random()/4}s`;
+      document.body.appendChild(p);
+      requestAnimationFrame(()=>{
+        const tx = (Math.random()*2-1)*120;
+        const ty = 110 + Math.random()*120;
+        p.style.transform = `translate(${tx}vw, ${ty}vh) rotate(${(Math.random()*360)|0}deg)`;
+        setTimeout(()=>{p.style.opacity=0;}, 700);
+        setTimeout(()=>{p.remove();}, 2000);
+      });
     }
+  }
 
-    function render(){
-      updateProgress();
-      container.innerHTML='';
-      if(current>total){ return showResult(); }
+  function openResult(){
+    modal.classList.add('open');
+    setTimeout(()=>flip.classList.add('flipped'), 80);
+  }
 
-      const slide=slides[current],
-            el=document.createElement('div');
-      el.className='slide';
-      const q=document.createElement('h2');
-      q.textContent=slide.question;
-      el.append(q);
+  function closeResult(){
+    modal.classList.remove('open');
+    flip.classList.remove('flipped');
+  }
 
-      if(slide.type==='welcome'){
-        const btn=document.createElement('button');
-        btn.textContent='Начать';
-        btn.onclick=()=>{ current++; render(); };
-        el.append(btn);
+  function draw(){
+    if(busy) return;
+    busy = true;
+    animateBar();
+    setTimeout(()=>{
+      const res = weightedPick();
+      answer.textContent = (res.tone==='joke' ? '😉' : '★');
+      pill.className = 'pill ' + pillClass(res.tone);
+      rtitle.textContent = titleByTone(res.tone);
+      text.textContent = res.text;
+      cta.textContent = res.cta || 'Перейти →';
+      cta.href = res.link;
 
-      } else if(slide.type==='radio'){
-        const opts=document.createElement('div');
-        opts.className='options';
-        slide.options.forEach(o=>{
-          const lbl=document.createElement('label');
-          lbl.innerHTML=`<input type="radio" name="${slide.name}" value="${o.value}"> ${o.text}`;
-          opts.append(lbl);
-        });
-        el.append(opts);
+      openResult();
+      if(res.tone==='yes') confettiBurst(); // вау-эффект на «ДА»
 
-        const btn=document.createElement('button');
-        btn.textContent=current<total?'Далее':'Завершить';
-        btn.disabled=true;
-        el.append(btn);
+      // обновим счётчик «спросили»
+      try{
+        const base = parseInt((localStorage.getItem('askedCount')||'1024'),10);
+        const next = base + 1;
+        localStorage.setItem('askedCount', String(next));
+        asked.textContent = next.toLocaleString('ru-RU');
+      }catch(e){ /* no op */ }
 
-        opts.addEventListener('input',()=>{ btn.disabled=!opts.querySelector('input:checked'); });
-        btn.onclick=()=>{
-          answers[slide.name]=+opts.querySelector('input:checked').value;
-          current++; render();
-        };
+      busy = false;
+    }, 800);
+  }
 
-      } else if(slide.type==='bmi'){
-        const flex=document.createElement('div');
-        flex.className='fields';
-        flex.innerHTML=`
-          <input id="weight" type="number" min="1" placeholder="Вес (кг)">
-          <input id="height" type="number" min="1" placeholder="Рост (см)">
-        `;
-        el.append(flex);
+  // события
+  deck.forEach(el=> el.addEventListener('click', draw));
+  drawBtn.addEventListener('click', draw);
+  shuffleBtn.addEventListener('click', shuffle);
+  again.addEventListener('click', ()=>{ closeResult(); setTimeout(shuffle, 260); });
 
-        const bmiDisplay=document.createElement('div');
-        bmiDisplay.id='bmiValue';
-        el.append(bmiDisplay);
-
-        const btn=document.createElement('button');
-        btn.textContent='Далее';
-        btn.disabled=true;
-        el.append(btn);
-
-        flex.addEventListener('input',()=>{
-          const w=parseFloat(flex.querySelector('#weight').value),
-                h=parseFloat(flex.querySelector('#height').value);
-          if(w>0&&h>0){
-            const bmi=w/((h/100)*(h/100));
-            bmiDisplay.textContent=`Ваш ИМТ: ${bmi.toFixed(1)}`;
-            btn.disabled=false;
-          } else {
-            bmiDisplay.textContent='';
-            btn.disabled=true;
-          }
-        });
-
-        btn.onclick=()=>{
-          const w=+flex.querySelector('#weight').value,
-                h=+flex.querySelector('#height').value/100,
-                bmi=w/(h*h);
-          answers.bmi=bmi>30?3:bmi>25?2:bmi>22?1:0;
-          current++; render();
-        };
-
-      } else if(slide.type==='salt'){
-        const opts=document.createElement('div');
-        opts.className='options';
-        saltProducts.forEach(p=>{
-          const lbl=document.createElement('label');
-          lbl.innerHTML=`<input type="checkbox" value="${p.value}"> ${p.text}`;
-          opts.append(lbl);
-        });
-        el.append(opts);
-
-        const saltResult=document.createElement('div');
-        saltResult.id='saltResult';
-        el.append(saltResult);
-
-        const btn=document.createElement('button');
-        btn.textContent=current<total?'Далее':'Завершить';
-        btn.disabled=true;
-        el.append(btn);
-
-        opts.addEventListener('change',()=>{
-          const checked=[...opts.querySelectorAll('input:checked')];
-          if(checked.length){
-            btn.disabled=false;
-            const totalSalt=checked.reduce((sum,c)=>sum+parseFloat(c.value),0);
-            let risk='';
-            if(totalSalt<=5) risk='🟢 Норма';
-            else if(totalSalt<=8) risk='🟡 Слегка выше нормы';
-            else risk='🔴 Высокое потребление соли!';
-            saltResult.textContent=`Примерно ${totalSalt.toFixed(1)} г соли в день. ${risk}`;
-            answers.salt = totalSalt>8?2:totalSalt>5?1:0;
-          } else {
-            saltResult.textContent='';
-            btn.disabled=true;
-          }
-        });
-
-        btn.onclick=()=>{ current++; render(); };
-      }
-
-      container.append(el);
-    }
-
-    function showResult(){
-      updateProgress();
-      container.innerHTML='';
-      const sum=Object.values(answers).reduce((a,b)=>a+b,0);
-      const box=document.createElement('div');
-      box.className='result';
-
-      if(sum<=5){
-        box.innerHTML=`
-          <img src="low.jpg" alt="">
-          <h2>Просто восхитительно! 🥳 У вас низкая склонность к отёчности.</h2>
-          <p>Отеки маловероятны или кратковременны 🔥</p>
-          <ul>
-            <li>🔸 Избегайте резкого повышения натрия (не употребляйте слишком много соли, фастфуда)</li>
-            <li>🔸 Поддерживайте текущее состояние шагательными тренировками</li>
-          </ul>
-          <p>В клубе ШАГАЙ ДОМА⚡ 280+ тренировок, которые помогут вам поддерживать фигуру и не дадут отекам появиться!</p>
-          <p>Избавься от лишней воды в теле с помощью наших эффективных противоотечных тренировок! ⬇️</p>
-          <a href="https://walk-walk.ru/?utm_source=website&utm_medium=test&utm_campaign=oteki" class="btn-link">Перейти к тренировкам</a>
-        `;
-      } else if(sum<=10){
-        box.innerHTML=`
-          <img src="medium.jpg" alt="">
-          <h2>У вас умеренная склонность к отёчности! 🤗</h2>
-          <p>Это значит, что отеки могут появляться на фоне цикла, питания, жары или малоподвижности.</p>
-          <ul>
-            <li>🔸 Следите за натрием в питании</li>
-            <li>🔸 Используйте мягкие лимфодренажные средства</li>
-            <li>🔸 Больше движения – идеально выполнять 1-2 шагательные тренировки в день</li>
-          </ul>
-          <p>Чтобы избавиться от отеков и сократить частоту их появления, начните заниматься по нашим анти-отечным тренировкам уже сегодня!</p>
-          <p>В клубе ШАГАЙ ДОМА⚡ 280+ тренировок, которые помогут поддерживать фигуру и не дадут отекам появиться!</p>
-          <p>Избавься от лишней воды в теле уже сегодня ⬇️</p>
-          <a href="https://walk-walk.ru/?utm_source=website&utm_medium=test&utm_campaign=oteki" class="btn-link">Перейти к тренировкам</a>
-        `;
-      } else {
-        box.innerHTML=`
-          <img src="high.jpg" alt="">
-          <h2>Ой! У вас высокая склонность к отёчности 😔</h2>
-          <p>Отеки могут быть частыми и сигнализировать о необходимости перемен.</p>
-          <ul>
-            <li>🔸 Обратитесь к врачу (кардиолог, эндокринолог) и сдайте анализы</li>
-            <li>🔸 Контроль соли и жидкости</li>
-            <li>🔸 Повышение физической активности – добавить ежедневные тренировки.</li>
-          </ul>
-          <p>Чтобы отеки не портили настроение и внешний вид, начните заниматься по нашим анти-отечным тренировкам уже сегодня!</p>
-          <p>В клубе ШАГАЙ ДОМА⚡ 280+ тренировок, которые не дадут отекам испортить ваш внешний вид!</p>
-          <p>Избавься от лишней воды в теле с помощью наших эффективных и проверенных программ! ⬇️</p>
-          <a href="https://walk-walk.ru/?utm_source=website&utm_medium=test&utm_campaign=oteki" class="btn-link">Перейти к тренировкам</a>
-        `;
-      }
-
-      container.append(box);
-
-      setTimeout(() => {
-        const hearts = sum<=5 ? ['❤️'] : sum<=10 ? ['💛'] : ['💔'];
-        const count = sum<=5 ? 25 : sum<=10 ? 15 : 10;
-        for (let i = 0; i < count; i++) {
-          createFallingHeart(hearts[0]);
-        }
-      }, 200);
-    }
-
-    function createFallingHeart(symbol) {
-      const heart = document.createElement('div');
-      heart.textContent = symbol;
-      heart.style.position = 'fixed';
-      heart.style.left = Math.random() * 100 + 'vw';
-      heart.style.top = '-30px';
-      heart.style.fontSize = Math.random() * 20 + 20 + 'px';
-      heart.style.opacity = 0.9;
-      heart.style.animation = 'fall 3s linear forwards';
-      document.body.appendChild(heart);
-      setTimeout(() => heart.remove(), 3000);
-    }
-
-    render();
-  </script>
+  // init
+  shuffle();
+  // инициализируем локальный счётчик
+  try{
+    if(!localStorage.getItem('askedCount')) localStorage.setItem('askedCount','1024');
+    asked.textContent = parseInt(localStorage.getItem('askedCount'),10).toLocaleString('ru-RU');
+  }catch(e){ /* no op */ }
+})();
+</script>
 </body>
 </html>
