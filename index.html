@@ -35,18 +35,15 @@
   h1{margin:8px 0 8px; font-size:26px; line-height:1.15}
   p.lead{margin:0 0 16px; color:#444}
 
-  /* Колода-веер (рубашкой к нам) */
-  .deck{margin:18px 0 8px; position:relative; height:180px;}
+  .deck{display:flex; justify-content:center; gap:12px; margin:18px 0 8px}
   .tarot{
     width:96px; height:148px; border-radius:14px; background:#fff;
     border:2px solid #eee; box-shadow:0 10px 18px rgba(0,0,0,.12);
-    transition:transform .25s ease, filter .25s ease; cursor:pointer;
-    position:absolute; bottom:0; left:50%; margin-left:-48px;
-    overflow:hidden; display:grid; place-items:center;
-    transform-origin:50% 100%;
+    transform-origin:center; transition:transform .25s ease, filter .25s ease; cursor:pointer;
+    position:relative; overflow:hidden; display:grid; place-items:center;
   }
   .tarot img{width:100%; height:100%; object-fit:cover; display:block}
-  .tarot:hover{filter:brightness(1.02); transform:translateX(var(--shift,0px)) rotate(var(--angle,0deg)) translateY(-4px)}
+  .tarot:hover{transform:translateY(-4px) rotate(-2deg); filter:brightness(1.02)}
 
   .actions{display:grid; gap:10px; margin:14px 0 4px}
   .btn{
@@ -82,7 +79,7 @@
   .cta{display:grid; gap:10px; margin-top:12px}
   .note{font-size:12px; color:#666; text-align:center}
 
-  /* Flip (лицевая картинка) */
+  /* Flip (лицо карты картинкой) */
   .flip{perspective:1000px; width:180px; height:260px; margin:0 auto 10px; position:relative;}
   .flip-inner{position:absolute; inset:0; transform-style:preserve-3d; transition:transform .8s ease;}
   .flip.flipped .flip-inner{transform:rotateY(180deg)}
@@ -105,7 +102,11 @@
       <h1 id="title">Спросите у карт: идти ли на <span style="color:#E85D04;font-weight:800">Остров Стройности</span> сейчас?</h1>
       <p class="lead">Сконцентрируйтесь на вопросе, сделайте вдох и потяните одну карту. Вселенная любит решительных ✨</p>
 
-      <div class="deck" id="deck" role="list" aria-label="Колода (веер)"></div>
+      <div class="deck" id="deck" role="list" aria-label="Колода">
+        <button class="tarot" aria-label="Потянуть карту 1"><img src="taro.png" alt="Рубашка карты"></button>
+        <button class="tarot" aria-label="Потянуть карту 2"><img src="taro.png" alt="Рубашка карты"></button>
+        <button class="tarot" aria-label="Потянуть карту 3"><img src="taro.png" alt="Рубашка карты"></button>
+      </div>
 
       <div class="actions">
         <button class="btn btn-primary" id="draw">Потянуть карту</button>
@@ -117,7 +118,7 @@
         <div class="bar"><i id="bar"></i></div>
       </div>
 
-      <div class="kpi">Уже спросили: <b id="asked">57</b> человек</div>
+      <div class="kpi">Уже спросили: <b id="asked">58</b> человек</div>
 
       <div class="footer">
         Нажимая на карту, вы соглашаетесь прислушаться к себе, а не к прокрастинации 😊
@@ -156,17 +157,19 @@
 
 <script>
 (function(){
-  const NUM_CARDS = 7; // можно 6 или 9
-
+  // ссылки
   const URL_INTENSIVE = "https://walk-walk.ru/happyisland?utm_source=website&utm_medium=app&utm_campaign=taro&utm_term=smm";
   const URL_CLUB      = "https://walk-walk.ru/?utm_source=website&utm_medium=app&utm_campaign=taro&utm_term=club";
 
+  // файлы
   const BACK_IMG = "taro.png";
   const CLUB_IMG = "karta1.png";
-  const FACES    = ["karta2.png","karta3.png","karta4.png","karta5.png","karta6.png","karta7.png"];
+  const FACE_IMGS = ["karta2.png","karta3.png","karta4.png","karta5.png","karta6.png","karta7.png"];
 
+  // вероятности
   const WEIGHTS = { yes:0.85, soft:0.10, joke:0.05 };
 
+  // тексты
   const YES = [
     "Вселенная дала свой знак! Вам точно нужно на «Остров Стройности».",
     "Карта предсказывает: первые шаги уже скоро изменят вашу жизнь!",
@@ -192,7 +195,9 @@
     "Вселенная пошутила: остров подождёт, а клуб открыт всегда."
   ];
 
+  // DOM
   const deck = document.getElementById('deck');
+  const cards = [...deck.querySelectorAll('.tarot')];
   const bar = document.getElementById('bar');
   const modal = document.getElementById('modal');
   const pill = document.getElementById('pill');
@@ -203,24 +208,26 @@
   const flip = document.getElementById('flip');
   const resultImg = document.getElementById('resultImg');
   const askedEl = document.getElementById('asked');
-  const btnDraw = document.getElementById('draw');
-  const btnShuffle = document.getElementById('shuffle');
+  const drawBtn = document.getElementById('draw');
+  const shuffleBtn = document.getElementById('shuffle');
 
-  [BACK_IMG, CLUB_IMG, ...FACES].forEach(s=>{ const i=new Image(); i.src=s; });
+  // предзагрузка
+  [BACK_IMG, CLUB_IMG, ...FACE_IMGS].forEach(src => { const i=new Image(); i.src = src; });
 
-  // Новый ключ счётчика, чтобы не тянуть старые значения
-  const COUNT_KEY = 'ww_tarot_asked_v3';
+  // счётчик 50–60 (новый ключ)
+  const COUNT_KEY = 'ww_tarot_asked_v4';
   try{
     if(!localStorage.getItem(COUNT_KEY)){
-      const base = 50 + Math.floor(Math.random()*11); // 50..60
+      const base = 50 + Math.floor(Math.random()*11);
       localStorage.setItem(COUNT_KEY, String(base));
     }
     askedEl.textContent = parseInt(localStorage.getItem(COUNT_KEY),10).toLocaleString('ru-RU');
   }catch(e){}
 
-  const HISTORY_KEY = 'ww_tarot_seen_faces_v3';
-  const loadHistory = ()=>{ try{return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]')}catch(e){return[]} };
-  const saveHistory = h => { try{localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(-6)))}catch(e){} };
+  // история по картинкам лица (не повторять чаще, чем раз в 6 показов)
+  const HIST_KEY = 'ww_tarot_seen_faces_v4';
+  const loadHistory = ()=>{ try{return JSON.parse(localStorage.getItem(HIST_KEY)||'[]')}catch(e){return[]} };
+  const saveHistory = h => { try{localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(-6)))}catch(e){} };
 
   const pickFrom = arr => arr[Math.floor(Math.random()*arr.length)];
   function pickTone(){
@@ -229,8 +236,8 @@
     if (r < WEIGHTS.yes + WEIGHTS.soft) return 'soft';
     return 'joke';
   }
-  function pillClass(t){ return t==='yes'?'pill-yes':t==='soft'?'pill-soft':'pill-joke'; }
-  function titleByTone(t){ return t==='yes'?'Знак получен: ДА':t==='soft'?'Знак получен: ДА, но бережно':'Редкий знак: шутка от вселенной'; }
+  const pillClass = t => t==='yes'?'pill-yes':t==='soft'?'pill-soft':'pill-joke';
+  const titleByTone = t => t==='yes'?'Знак получен: ДА':t==='soft'?'Знак получен: ДА, но бережно':'Редкий знак: шутка от вселенной';
 
   function pickOutcome(){
     const hist = loadHistory();
@@ -242,8 +249,8 @@
     let face, text, link;
     if (tone==='joke'){ face = CLUB_IMG; text = pickFrom(JOKE); link = URL_CLUB; }
     else {
-      const avail = FACES.filter(f=>!banned.has(f));
-      face = pickFrom(avail.length?avail:FACES);
+      const avail = FACE_IMGS.filter(f=>!banned.has(f));
+      face = pickFrom(avail.length?avail:FACE_IMGS);
       text = (tone==='yes')?pickFrom(YES):pickFrom(SOFT);
       link = URL_INTENSIVE;
     }
@@ -252,13 +259,13 @@
   }
 
   function animateBar(){
-    bar.style.width='0%';
-    requestAnimationFrame(()=>setTimeout(()=>{bar.style.width='100%'},60));
+    bar.style.width = '0%';
+    requestAnimationFrame(()=> setTimeout(()=>{ bar.style.width='100%'; },60));
   }
   function openResult(){ modal.classList.add('open'); setTimeout(()=>flip.classList.add('flipped'),80); }
   function closeResult(){ modal.classList.remove('open'); flip.classList.remove('flipped'); }
 
-  function onDraw(){
+  function draw(){
     animateBar();
     setTimeout(()=>{
       const res = pickOutcome();
@@ -267,7 +274,7 @@
       rtitle.textContent = titleByTone(res.tone);
       textEl.textContent = res.text;
       cta.href = res.link;
-      cta.textContent = (res.tone==='joke')?'В клуб →':'Иду на «Остров Стройности»';
+      cta.textContent = (res.tone==='joke') ? 'В клуб →' : 'Иду на «Остров Стройности»';
 
       try{
         const base = parseInt(localStorage.getItem(COUNT_KEY) || '50', 10);
@@ -277,48 +284,25 @@
       }catch(e){}
 
       openResult();
-    },800);
+    }, 800);
   }
 
-  function buildFan(){
-    deck.innerHTML='';
-    const totalAngle = 40;    // общий угол веера
-    const maxShiftX = 8;      // разнос по X
-    const mid = (NUM_CARDS-1)/2;
-    for(let i=0;i<NUM_CARDS;i++){
-      const btn = document.createElement('button');
-      btn.className='tarot';
-      const img = document.createElement('img'); img.src = BACK_IMG; img.alt='Рубашка карты';
-      btn.appendChild(img);
-
-      const rel = (i - mid) / mid;          // -1..1
-      const angle = rel * (totalAngle/2);   // -20..+20
-      const shift = rel * maxShiftX;        // -8..+8
-
-      btn.style.setProperty('--angle', angle.toFixed(2)+'deg');
-      btn.style.setProperty('--shift', shift.toFixed(2)+'px');
-      btn.style.transform = `translateX(${shift.toFixed(2)}px) rotate(${angle.toFixed(2)}deg)`;
-      btn.style.zIndex = String(100 + i);
-      btn.addEventListener('click', onDraw);
-      deck.appendChild(btn);
-    }
-  }
-  function reshuffle(){
-    const totalAngle = 40, maxShiftX = 8, mid = (NUM_CARDS-1)/2;
-    [...deck.children].forEach((el,i)=>{
-      const rel = (i - mid) / mid;
-      const angle = rel*(totalAngle/2) + (Math.random()*2-1)*0.6;
-      const shift = rel*maxShiftX + (Math.random()*2-1)*1.0;
-      el.style.setProperty('--angle', angle.toFixed(2)+'deg');
-      el.style.setProperty('--shift', shift.toFixed(2)+'px');
-      el.style.transform = `translateX(${shift.toFixed(2)}px) rotate(${angle.toFixed(2)}deg)`;
+  function shuffle(){
+    cards.forEach(el=>{
+      const r = (Math.random()*6-3);
+      const y = (Math.random()*6-3);
+      el.style.transform = `translateY(${y}px) rotate(${r}deg)`;
     });
   }
 
-  buildFan();
-  document.getElementById('draw').addEventListener('click', onDraw);
-  document.getElementById('shuffle').addEventListener('click', reshuffle);
-  document.getElementById('again').addEventListener('click', ()=>{ closeResult(); setTimeout(reshuffle,260); });
+  // события
+  cards.forEach(el=> el.addEventListener('click', draw));
+  drawBtn.addEventListener('click', draw);
+  shuffleBtn.addEventListener('click', shuffle);
+  again.addEventListener('click', ()=>{ closeResult(); setTimeout(shuffle,260); });
+
+  // init
+  shuffle();
 })();
 </script>
 </body>
