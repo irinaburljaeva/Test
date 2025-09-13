@@ -35,21 +35,27 @@
   h1{margin:8px 0 8px; font-size:26px; line-height:1.15}
   p.lead{margin:0 0 16px; color:#444}
 
-  /* колода — тот же стиль, но позволим перенос на новую строку */
-  .deck{
-    display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin:18px 0 8px;
+  /* Колода: два режима — fan (ступенькой) и triple (3 карты) */
+  .deck{margin:18px 0 8px}
+  .deck.fan{
+    position:relative;
+    height: 260px; /* авто подстраивается JS-ом; стартовое значение */
   }
+  .deck.triple{
+    display:flex; justify-content:center; gap:12px;
+  }
+
   .tarot{
-    width:96px; height:148px; border-radius:14px; background:
-      repeating-linear-gradient(45deg,#f7f7f7 0 10px,#f1f1f1 10px 20px);
+    width:96px; height:148px; border-radius:14px; background:#fff;
     border:2px solid #eee; box-shadow:0 10px 18px rgba(0,0,0,.12);
     transform-origin:center; transition:transform .25s ease, filter .25s ease; cursor:pointer;
-    position:relative; overflow:hidden;
+    position:relative; overflow:hidden; display:grid; place-items:center;
   }
-  .tarot:before{
-    content:"★"; position:absolute; inset:0; display:grid; place-items:center;
-    font-size:28px; color:#c7c7c7;
+  .deck.fan .tarot{
+    position:absolute; /* будем раскладывать ступенькой и слегка веером */
+    left:50%; margin-left:-48px; /* центр карты */
   }
+  .tarot img{width:100%; height:100%; object-fit:cover; display:block}
   .tarot:hover{transform:translateY(-4px) rotate(-2deg); filter:brightness(1.02)}
 
   .actions{display:grid; gap:10px; margin:14px 0 4px}
@@ -60,7 +66,6 @@
   .btn-primary{background:var(--red); color:#fff; box-shadow:0 10px 22px rgba(207,44,2,.28)}
   .btn-primary:active{transform:translateY(1px)}
   .btn-secondary{background:#fff; color:#333; border:2px solid var(--gray)}
-
   .footer{text-align:center; font-size:12px; color:#666; margin-top:12px}
   .brand{display:flex; align-items:center; gap:8px; font-weight:700; margin-top:10px}
   .dot{width:10px; height:10px; border-radius:50%; background:var(--red)}
@@ -88,15 +93,15 @@
   .cta{display:grid; gap:10px; margin-top:12px}
   .note{font-size:12px; color:#666; text-align:center}
 
-  /* Flip card */
+  /* Flip card — показываем лицо картинкой */
   .flip{perspective:1000px; width:180px; height:260px; margin:0 auto 10px; position:relative;}
   .flip-inner{position:absolute; inset:0; transform-style:preserve-3d; transition:transform .8s ease;}
   .flip.flipped .flip-inner{transform:rotateY(180deg)}
   .flip-face{position:absolute; inset:0; backface-visibility:hidden; border-radius:20px; overflow:hidden;
     box-shadow:0 10px 24px rgba(0,0,0,.18);}
   .flip-front{background:repeating-linear-gradient(45deg,#fafafa 0 12px,#f2f2f2 12px 24px); display:grid; place-items:center; color:#bbb; font-size:28px}
-  .flip-back{background:#fff; transform:rotateY(180deg); border:2px solid var(--gray); display:grid; place-items:center; padding:18px}
-  .flip-back .answer{text-align:center; padding:0 10px; font-size:16px; line-height:1.3}
+  .flip-back{background:#fff; transform:rotateY(180deg); border:2px solid var(--gray); display:grid; place-items:center; padding:0}
+  .flip-back img{width:100%; height:100%; object-fit:cover; display:block; border-radius:18px}
 
   .kpi{margin-top:8px; font-size:12px; color:#666; text-align:center}
   .kpi b{color:#000}
@@ -111,12 +116,9 @@
       <h1 id="title">Спросите у карт: идти ли на <span style="color:#E85D04;font-weight:800">Остров Стройности</span> сейчас?</h1>
       <p class="lead">Сконцентрируйтесь на вопросе, сделайте вдох и потяните одну карту. Вселенная любит решительных ✨</p>
 
-      <div class="deck" id="deck" role="list" aria-label="Колода">
-        <!-- Карты создаются скриптом: 9 (или 6) штук -->
-      </div>
+      <div class="deck fan" id="deck" role="list" aria-label="Колода"></div>
 
       <div class="actions">
-        <!-- Кнопку «Потянуть карту» оставляем как дубль-действие (можно и скрыть) -->
         <button class="btn btn-primary" id="draw">Потянуть карту</button>
         <button class="btn btn-secondary" id="shuffle" aria-label="Перетасовать колоду">Перетасовать ✦</button>
       </div>
@@ -144,7 +146,7 @@
         <div class="flip-inner">
           <div class="flip-face flip-front">★</div>
           <div class="flip-face flip-back">
-            <div class="answer" id="answer">Ответ готов…</div>
+            <img id="resultImg" src="" alt="Выпавшая карта">
           </div>
         </div>
       </div>
@@ -166,17 +168,24 @@
 
 <script>
 (function(){
-  // --- параметры сетки: 9 или 6 карт
-  const NUM_CARDS = 9; // Поставь 6, если нужно 6 карт
+  /* ==== РЕЖИМ РАСКЛАДКИ ==== 
+     'fan'    — ступенькой с перекрытием (как колода в руках)
+     'triple' — классические 3 карты
+  */
+  const MODE = 'fan';    // поменяй на 'triple' для старого вида
+  const NUM_CARDS = (MODE==='fan' ? 9 : 3);
 
-  // --- ссылки
+  // ссылки
   const URL_INTENSIVE = "https://walk-walk.ru/happyisland?utm_source=website&utm_medium=app&utm_campaign=taro&utm_term=smm";
   const URL_CLUB      = "https://walk-walk.ru/?utm_source=website&utm_medium=app&utm_campaign=taro&utm_term=club";
 
-  // --- веса
-  const WEIGHTS = { yes:0.85, soft:0.10, joke:0.05 };
+  // файлы
+  const BACK_IMG = "taro.png";
+  const CLUB_IMG = "karta1.png";
+  const FACE_IMGS = ["karta2.png","karta3.png","karta4.png","karta5.png","karta6.png","karta7.png"];
 
-  // --- тексты
+  // веса и тексты
+  const WEIGHTS = { yes:0.85, soft:0.10, joke:0.05 };
   const YES = [
     "Вселенная дала свой знак! Вам точно нужно на «Остров Стройности».",
     "Карта предсказывает: первые шаги уже скоро изменят вашу жизнь!",
@@ -202,7 +211,7 @@
     "Вселенная пошутила: остров подождёт, а клуб открыт всегда."
   ];
 
-  // --- DOM
+  // DOM
   const deck    = document.getElementById('deck');
   const bar     = document.getElementById('bar');
   const modal   = document.getElementById('modal');
@@ -212,12 +221,15 @@
   const cta     = document.getElementById('cta');
   const again   = document.getElementById('again');
   const flip    = document.getElementById('flip');
-  const answer  = document.getElementById('answer');
+  const resultImg = document.getElementById('resultImg');
   const askedEl = document.getElementById('asked');
   const drawBtn = document.getElementById('draw');
   const shuffleBtn = document.getElementById('shuffle');
 
-  // --- старт счётчика 50..60
+  // предзагрузка
+  [BACK_IMG, CLUB_IMG, ...FACE_IMGS].forEach(src => { const i = new Image(); i.src = src; });
+
+  // старт счётчика 50..60
   try{
     if(!localStorage.getItem('askedCount')){
       const base = 50 + Math.floor(Math.random()*11); // 50..60
@@ -226,50 +238,48 @@
     askedEl.textContent = parseInt(localStorage.getItem('askedCount'),10).toLocaleString('ru-RU');
   }catch(e){}
 
-  // --- история (не повторять чаще, чем раз в 6 показов)
-  const KEY = 'ww_tarot_seen_text_v2';
+  // история по лицам
+  const KEY = 'ww_tarot_seen_faces_v2';
   function loadHistory(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(e){ return []; } }
   function saveHistory(h){ try{ localStorage.setItem(KEY, JSON.stringify(h.slice(-6))); }catch(e){} }
 
-  // варианты с ключами
-  const outcomes = [
-    ...YES.map((t,i)=>({key:'Y'+i, tone:'yes',  text:t, link:URL_INTENSIVE})),
-    ...SOFT.map((t,i)=>({key:'S'+i, tone:'soft', text:t, link:URL_INTENSIVE})),
-    ...JOKE.map((t,i)=>({key:'J'+i, tone:'joke', text:t, link:URL_CLUB}))
-  ];
-
-  function pickWeightedTone(){
+  function pickFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function pickTone(){
     const r = Math.random();
     if (r < WEIGHTS.yes) return 'yes';
     if (r < WEIGHTS.yes + WEIGHTS.soft) return 'soft';
     return 'joke';
   }
-  function pickFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-
-  function pickOutcome(){
-    const hist = loadHistory();
-    const banned = new Set(hist);
-
-    let tone = pickWeightedTone();
-    if (tone==='joke' && [...banned].some(k=>k.startsWith('J'))){
-      // шутка была недавно — смещаем к yes/soft по их относительным долям
-      tone = (Math.random() < WEIGHTS.soft/(WEIGHTS.yes+WEIGHTS.soft)) ? 'soft' : 'yes';
-    }
-
-    const poolClean = outcomes.filter(o=>o.tone===tone && !banned.has(o.key));
-    const pool = poolClean.length ? poolClean : outcomes.filter(o=>o.tone===tone);
-
-    const res = pickFrom(pool);
-    hist.push(res.key);
-    saveHistory(hist);
-    return res;
-  }
-
   function pillClass(tone){ return tone==='yes' ? 'pill-yes' : tone==='soft' ? 'pill-soft' : 'pill-joke'; }
   function titleByTone(tone){
     if(tone==='yes')  return 'Знак получен: ДА';
     if(tone==='soft') return 'Знак получен: ДА, но бережно';
     return 'Редкий знак: шутка от вселенной';
+  }
+
+  function pickOutcome(){
+    const hist = loadHistory();
+    const banned = new Set(hist);
+
+    let tone = pickTone();
+    if (tone==='joke' && banned.has(CLUB_IMG)){
+      tone = (Math.random() < 0.5) ? 'soft' : 'yes';
+    }
+
+    let face, text, link;
+    if (tone==='joke'){
+      face = CLUB_IMG; text = pickFrom(JOKE); link = URL_CLUB;
+    } else {
+      const available = FACE_IMGS.filter(f=>!banned.has(f));
+      const pool = available.length ? available : FACE_IMGS;
+      face = pickFrom(pool);
+      text = (tone==='yes') ? pickFrom(YES) : pickFrom(SOFT);
+      link = URL_INTENSIVE;
+    }
+
+    hist.push(face);
+    saveHistory(hist);
+    return {tone, face, text, link};
   }
 
   function animateBar(){
@@ -283,14 +293,14 @@
     animateBar();
     setTimeout(()=>{
       const res = pickOutcome();
-      answer.textContent = (res.tone==='joke' ? '😉' : '★');
+      resultImg.src = res.face;
+      resultImg.alt = "Карта";
       pill.className = 'pill ' + pillClass(res.tone);
       rtitle.textContent = titleByTone(res.tone);
       textEl.textContent = res.text;
       cta.href = res.link;
       cta.textContent = (res.tone==='joke') ? 'В клуб →' : 'Иду на «Остров Стройности»';
 
-      // инкремент счётчика
       try{
         const base = parseInt(localStorage.getItem('askedCount') || '50', 10);
         const next = base + 1;
@@ -302,35 +312,80 @@
     }, 800);
   }
 
-  // создаём 6/9 карт-рубашек
+  // построение колоды
   function buildDeck(){
+    deck.classList.toggle('fan', MODE==='fan');
+    deck.classList.toggle('triple', MODE==='triple');
     deck.innerHTML = '';
+
+    if (MODE==='triple'){
+      for(let i=0;i<3;i++){
+        const btn = document.createElement('button');
+        btn.className = 'tarot';
+        const img = document.createElement('img'); img.src = BACK_IMG; img.alt='Рубашка карты';
+        btn.appendChild(img);
+        // небольшой рандом как было
+        const r = (Math.random()*6-3), y=(Math.random()*6-3);
+        btn.style.transform = `translateY(${y}px) rotate(${r}deg)`;
+        btn.addEventListener('click', onDraw);
+        deck.appendChild(btn);
+      }
+      return;
+    }
+
+    // FAN: ступенькой с перекрытием снизу и лёгким веером
+    const overlap = 22;              // насколько перекрывать по вертикали (px)
+    const baseTop = 8;               // отступ верхней карты
+    const mid = (NUM_CARDS-1)/2;     // для веера
+    const maxTilt = 7;               // макс. угол веера (градусы)
+    const spreadX = 6;               // разнос по X для эффекта веера (px)
+
+    // динамическая высота контейнера, чтобы влезли все перекрытия
+    deck.style.height = (148 + baseTop + overlap*(NUM_CARDS-1)) + 'px';
+
     for(let i=0;i<NUM_CARDS;i++){
       const btn = document.createElement('button');
       btn.className = 'tarot';
-      btn.setAttribute('aria-label', 'Потянуть карту ' + (i+1));
-      // легкая случайная «раскладка» — как было
-      const r = (Math.random()*6-3);
-      const y = (Math.random()*6-3);
-      btn.style.transform = `translateY(${y}px) rotate(${r}deg)`;
+      btn.setAttribute('aria-label','Потянуть карту ' + (i+1));
+      const img = document.createElement('img'); img.src = BACK_IMG; img.alt='Рубашка карты';
+      btn.appendChild(img);
+
+      // позиционирование
+      const top = baseTop + i*overlap;
+      const tilt = ((i - mid) / mid) * maxTilt;          // -maxTilt..+maxTilt
+      const shiftX = ((i - mid) / mid) * spreadX;        // -spreadX..+spreadX
+
+      btn.style.top = top + 'px';
+      btn.style.transform = `translateX(${shiftX}px) rotate(${tilt.toFixed(2)}deg)`;
+      btn.style.zIndex = String(100 + i); // верхняя карта кликабельнее
+
       btn.addEventListener('click', onDraw);
       deck.appendChild(btn);
     }
   }
 
   function reshuffle(){
-    [...deck.children].forEach(el=>{
-      const r = (Math.random()*6-3);
-      const y = (Math.random()*6-3);
-      el.style.transform = `translateY(${y}px) rotate(${r}deg)`;
-    });
+    if (MODE==='triple'){
+      [...deck.children].forEach(el=>{
+        const r = (Math.random()*6-3), y=(Math.random()*6-3);
+        el.style.transform = `translateY(${y}px) rotate(${r}deg)`;
+      });
+    } else {
+      // небольшой «дрожащий» reshuffle для веера
+      const mid = (NUM_CARDS-1)/2, maxTilt=7, spreadX=6;
+      [...deck.children].forEach((el, i)=>{
+        const tilt = ((i - mid) / mid) * maxTilt + (Math.random()*2-1)*0.6;
+        const shiftX = ((i - mid) / mid) * spreadX + (Math.random()*2-1)*1.2;
+        el.style.transform = `translateX(${shiftX.toFixed(2)}px) rotate(${tilt.toFixed(2)}deg)`;
+      });
+    }
   }
 
   // события
   buildDeck();
-  drawBtn.addEventListener('click', onDraw);       // дубль на кнопку
-  shuffleBtn.addEventListener('click', reshuffle);
-  again.addEventListener('click', ()=>{ closeResult(); setTimeout(reshuffle,260); });
+  document.getElementById('draw').addEventListener('click', onDraw);
+  document.getElementById('shuffle').addEventListener('click', reshuffle);
+  document.getElementById('again').addEventListener('click', ()=>{ modal.classList.remove('open'); flip.classList.remove('flipped'); setTimeout(reshuffle,260); });
 
 })();
 </script>
