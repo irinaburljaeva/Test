@@ -127,7 +127,6 @@
     type: 'photo',
     question: '9. Дополнительно: хотите получить визуальную оценку отёчности по фото?'
   }
-];
     ];
 
     const saltProducts = [
@@ -263,7 +262,7 @@
         });
 
         btn.onclick=()=>{ current++; render(); };
-      },
+
       } else if (slide.type === 'photo') {
         const info = document.createElement('p');
         info.style.marginBottom = '1rem';
@@ -336,7 +335,7 @@
             }, 1200);
           }, 1500);
         };
-
+      }
       container.append(el);
     }
 
@@ -396,7 +395,7 @@
       }
 
       container.append(box);
-
+    }
       
 
     render();
