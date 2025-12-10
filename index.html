@@ -268,49 +268,113 @@
         info.style.marginBottom = '1rem';
         info.style.textAlign = 'left';
         info.innerHTML = `
-          Вы можете <strong>загрузить своё фото в анфас </strong> при дневном свете, чтобы запустить визуальный анализ отёчности.<br><br>
-          <strong>Важно:</strong> фото <strong>никуда не отправляется</strong>, не сохраняется на сервере и не передаётся третьим лицам. 
-          Анализ выполняется только в вашем браузере, а после обновления страницы снимок исчезнет. Никто, кроме вас, это фото не увидит.
+          Необязательный шаг: вы можете сделать фото лица или выбрать готовое из галереи,
+          чтобы запустить визуальный анализ отёчности.<br><br>
+          <strong>Важно:</strong> снимок остаётся только у вас — мы его не сохраняем и никуда не отправляем.
         `;
         el.append(info);
 
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
-        fileInput.style.marginBottom = '1rem';
-        el.append(fileInput);
-
         const status = document.createElement('div');
-        status.id = 'photoStatus';
         status.style.minHeight = '2rem';
         status.style.fontSize = '.9rem';
         status.style.color = '#555';
-        status.style.marginBottom = '1rem';
+        status.style.margin = '0 0 1rem';
         status.style.textAlign = 'left';
         el.append(status);
 
-        const buttonsWrapper = document.createElement('div');
-        buttonsWrapper.style.display = 'flex';
-        buttonsWrapper.style.gap = '0.5rem';
-        buttonsWrapper.style.flexWrap = 'wrap';
+        // Скрытые инпуты: галерея и камера
+        const inputGallery = document.createElement('input');
+        inputGallery.type = 'file';
+        inputGallery.accept = 'image/*';
+        inputGallery.style.display = 'none';
+
+        const inputCamera = document.createElement('input');
+        inputCamera.type = 'file';
+        inputCamera.accept = 'image/*';
+        inputCamera.capture = 'user'; // на телефонах предложит камеру
+        inputCamera.style.display = 'none';
+
+        el.append(inputGallery, inputCamera);
+
+        // Кнопки действий
+        const btnRow = document.createElement('div');
+        btnRow.style.display = 'flex';
+        btnRow.style.gap = '0.5rem';
+        btnRow.style.marginBottom = '0.75rem';
+
+        const btnGallery = document.createElement('button');
+        btnGallery.textContent = 'Выбрать из галереи';
+        btnGallery.style.flex = '1';
+
+        const btnCamera = document.createElement('button');
+        btnCamera.textContent = 'Открыть камеру';
+        btnCamera.style.flex = '1';
+
+        btnRow.append(btnGallery, btnCamera);
+        el.append(btnRow);
 
         const skipBtn = document.createElement('button');
         skipBtn.textContent = 'Продолжить без фото';
-        skipBtn.style.flex = '1';
+        el.append(skipBtn);
 
-        const analyzeBtn = document.createElement('button');
-        analyzeBtn.textContent = 'Запустить визуальный анализ';
-        analyzeBtn.style.flex = '1';
+        // Функция «визуального анализа»
+        const startAnalysis = (file) => {
+          if (!file) return;
 
-        buttonsWrapper.append(skipBtn, analyzeBtn);
-        el.append(buttonsWrapper);
+          btnGallery.disabled = true;
+          btnCamera.disabled = true;
+          skipBtn.disabled = true;
+
+          let step = 0;
+          const steps = [
+            'Изображение загружено. Начинаем анализ…',
+            'Анализируем контур лица…',
+            'Оцениваем зону под глазами…',
+            'Считаем общую отёчность…'
+          ];
+
+          status.textContent = steps[step];
+
+          const interval = setInterval(() => {
+            step++;
+            if (step < steps.length) {
+              status.textContent = steps[step];
+            } else {
+              clearInterval(interval);
+              status.textContent = 'Анализ завершён. Готовим ваши результаты…';
+              setTimeout(() => {
+                // Переход к финальному результату
+                current++;
+                render();
+              }, 800);
+            }
+          }, 800);
+        };
+
+        // Обработчики
+        btnGallery.onclick = () => {
+          inputGallery.click();
+        };
+
+        btnCamera.onclick = () => {
+          inputCamera.click();
+        };
+
+        inputGallery.addEventListener('change', () => {
+          const file = inputGallery.files[0];
+          if (file) startAnalysis(file);
+        });
+
+        inputCamera.addEventListener('change', () => {
+          const file = inputCamera.files[0];
+          if (file) startAnalysis(file);
+        });
 
         skipBtn.onclick = () => {
-          // просто идём дальше, фото не обязательно
           current++;
           render();
         };
-
+      }
         analyzeBtn.onclick = () => {
           if (!fileInput.files || !fileInput.files[0]) {
             status.textContent = 'Пожалуйста, выберите фото или продолжите без анализа.';
